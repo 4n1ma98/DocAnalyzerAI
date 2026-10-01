@@ -1,0 +1,58 @@
+@namespace DocAnalyzerAI.Components.Audit
+@using DocAnalyzerAI.Models
+
+@if (Items == null || Items.Count == 0)
+{
+    <div class="alert alert-success text-center p-4 rounded-4">
+        <i class="bi bi-shield-fill-check fs-2 d-block mb-2"></i>
+        ¡Excelente noticia! No se detectaron cláusulas abusivas ni banderas rojas de alto peligro en este contrato.
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var flag in Items)
+        {
+            <div class="col-12">
+                <div class="finding-card redflag-card p-4 shadow-sm">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi bi-slash-circle-fill text-danger fs-5"></i>
+                            <h5 class="fw-bold text-danger mb-0">Riesgo Contractual Detectado</h5>
+                        </div>
+                        <span class="badge @GetRiskLevelBadgeClass(flag.RiskLevel) text-uppercase px-3 py-1">
+                            Nivel: @FormatRiskLevel(flag.RiskLevel)
+                        </span>
+                    </div>
+                    <div class="clause-quote-box my-3 bg-danger-subtle border-danger text-danger-emphasis">
+                        <strong>Cláusula de Alerta:</strong> &ldquo;@flag.Clause&rdquo;
+                    </div>
+                    <div class="mt-2">
+                        <strong class="text-secondary small text-uppercase">Peligro y Justificación Jurídica:</strong>
+                        <p class="text-dark mt-1 mb-0">@flag.DangerExplanation</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public List<RiskFlag> Items { get; set; } = [];
+
+    private static string GetRiskLevelBadgeClass(string level) => level?.ToLowerInvariant() switch
+    {
+        "low" or "bajo" => "bg-success-subtle text-success border border-success-subtle",
+        "medium" or "medio" or "moderado" => "bg-warning-subtle text-warning border border-warning-subtle",
+        "critical" or "crítico" or "critico" or "alto" => "bg-danger text-white",
+        _ => "bg-secondary-subtle text-secondary"
+    };
+
+    private static string FormatRiskLevel(string level) => level?.ToLowerInvariant() switch
+    {
+        "low" or "bajo" => "Bajo",
+        "medium" or "medio" or "moderado" => "Medio",
+        "critical" or "crítico" or "critico" or "alto" => "Crítico",
+        _ => level ?? "Medio"
+    };
+}

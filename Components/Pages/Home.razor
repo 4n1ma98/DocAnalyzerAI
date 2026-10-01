@@ -1,0 +1,266 @@
+@page "/"
+@rendermode InteractiveServer
+@inject IDocumentReaderService DocumentReader
+@inject IGeminiAuditService GeminiService
+
+<PageTitle>DocAnalyzer AI - Auditoría Legal de Contratos</PageTitle>
+
+<div class="container-fluid pb-5">
+    <!-- Hero Header -->
+    <div class="doc-header-card p-4 p-md-5 mb-4">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="badge bg-light text-primary fw-semibold mb-2 px-3 py-1">
+                    <i class="bi bi-robot me-1"></i> Inteligencia Legal Asistida
+                </span>
+                <h1 class="display-6 fw-bold mb-2">Auditoría Crítica de Contratos &amp; Acuerdos</h1>
+                <p class="lead mb-0 text-white-50">
+                    Sube cualquier contrato en formato <strong>PDF</strong> o <strong>Word (.docx)</strong>. Nuestro motor impulsado por Google Gemini extraerá cláusulas críticas, detectará asimetrías y generará contrapropuestas de negociación inmediatas.
+                </p>
+            </div>
+            <div class="col-lg-4 text-center text-lg-end mt-4 mt-lg-0">
+                <div class="d-inline-flex flex-column align-items-center bg-white bg-opacity-10 rounded-4 p-3 border border-white border-opacity-25">
+                    <i class="bi bi-file-earmark-check-fill text-warning fs-1 mb-1"></i>
+                    <span class="fw-bold small text-uppercase tracking-wider">Formatos Admitidos</span>
+                    <span class="badge bg-white text-dark mt-1">PDF &amp; DOCX (Máx. 15 MB)</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show d-flex align-items-start gap-2 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-octagon-fill fs-5 mt-1 flex-shrink-0"></i>
+            <div>
+                <strong>Error en el proceso:</strong>
+                <p class="mb-0 mt-1">@ErrorMessage</p>
+            </div>
+            <button type="button" class="btn-close ms-auto" @onclick="() => ErrorMessage = null" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Panel de Carga / Input Modular (Permanece en el DOM para streaming de archivo pero se oculta con CSS) -->
+    <div class="row justify-content-center @(AnalysisData != null || IsProcessing ? "d-none" : "")">
+        <div class="col-xl-9">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <DocumentDropZone SelectedFile="@SelectedFile"
+                                  OnFileSelected="HandleFileSelected"
+                                  OnClearFile="ClearSelectedFile"
+                                  OnStartAudit="StartAuditAsync"
+                                  IsProcessing="@IsProcessing" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Estado de Procesamiento Activo Modular -->
+    @if (IsProcessing)
+    {
+        <AuditProgressIndicator StatusMessage="@ProcessingStatusMessage"
+                                Progress="@ProcessingProgress"
+                                ElapsedSeconds="@ElapsedSeconds" />
+    }
+
+    <!-- Dashboard de Resultados Modular -->
+    @if (AnalysisData != null && !IsProcessing)
+    {
+        <!-- Header del Reporte -->
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex align-items-center gap-2 text-muted small mb-1">
+                        <i class="bi bi-check-circle-fill text-success"></i> Documento auditado con éxito
+                    </div>
+                    <h2 class="h3 fw-bold mb-1 text-dark">@AuditFileName</h2>
+                    <p class="text-muted mb-0 small">
+                        Analizado por Google Gemini &bull; Clasificación de cláusulas y semáforo de riesgo contractual
+                    </p>
+                </div>
+                <RiskScoreGauge Score="@AnalysisData.RiskScore" OnReset="ResetAnalysis" />
+            </div>
+        </div>
+
+        <!-- Navegación por Tabs -->
+        <ul class="nav nav-pills nav-pills-custom mb-4 gap-2 border-bottom pb-3">
+            <li class="nav-item">
+                <button class="nav-link @(ActiveTab == "summary" ? "active" : "")" @onclick='() => ActiveTab = "summary"'>
+                    <i class="bi bi-file-text me-2"></i>Resumen Ejecutivo
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(ActiveTab == "strengths" ? "active" : "")" @onclick='() => ActiveTab = "strengths"'>
+                    <i class="bi bi-shield-check me-2 text-success"></i>Puntos Fuertes
+                    <span class="badge bg-success-subtle text-success ms-2">@AnalysisData.Strengths.Count</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(ActiveTab == "weaknesses" ? "active" : "")" @onclick='() => ActiveTab = "weaknesses"'>
+                    <i class="bi bi-exclamation-triangle me-2 text-warning"></i>Puntos Débiles
+                    <span class="badge bg-warning-subtle text-warning ms-2">@AnalysisData.Weaknesses.Count</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(ActiveTab == "redflags" ? "active" : "")" @onclick='() => ActiveTab = "redflags"'>
+                    <i class="bi bi-flag-fill me-2 text-danger"></i>Red Flags
+                    <span class="badge bg-danger-subtle text-danger ms-2">@AnalysisData.RedFlags.Count</span>
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link @(ActiveTab == "negotiation" ? "active" : "")" @onclick='() => ActiveTab = "negotiation"'>
+                    <i class="bi bi-chat-quote-fill me-2 text-primary"></i>Mesa de Negociación
+                    <span class="badge bg-primary-subtle text-primary ms-2">@AnalysisData.NegotiationSuggestions.Count</span>
+                </button>
+            </li>
+        </ul>
+
+        <!-- Contenido de las Secciones / Tabs Modulares -->
+        <div class="tab-content">
+            @if (ActiveTab == "summary")
+            {
+                <ExecutiveSummaryTab Summary="@AnalysisData.DocumentSummary"
+                                     StrengthsCount="@AnalysisData.Strengths.Count"
+                                     WeaknessesCount="@AnalysisData.Weaknesses.Count"
+                                     RedFlagsCount="@AnalysisData.RedFlags.Count" />
+            }
+            @if (ActiveTab == "strengths")
+            {
+                <StrengthsTab Items="@AnalysisData.Strengths" />
+            }
+            @if (ActiveTab == "weaknesses")
+            {
+                <WeaknessesTab Items="@AnalysisData.Weaknesses" />
+            }
+            @if (ActiveTab == "redflags")
+            {
+                <RedFlagsTab Items="@AnalysisData.RedFlags" />
+            }
+            @if (ActiveTab == "negotiation")
+            {
+                <NegotiationTableTab Suggestions="@AnalysisData.NegotiationSuggestions" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private IBrowserFile? SelectedFile;
+    private string? ErrorMessage;
+    private bool IsProcessing;
+    private string ProcessingStatusMessage = string.Empty;
+    private int ProcessingProgress = 0;
+    private int ElapsedSeconds = 0;
+
+    private AnalysisResult? AnalysisData;
+    private string? AuditFileName;
+    private string ActiveTab = "summary";
+
+    private void HandleFileSelected(InputFileChangeEventArgs e)
+    {
+        ErrorMessage = null;
+        var file = e.File;
+        if (file != null)
+        {
+            ValidateAndSetFile(file);
+        }
+    }
+
+    private void ValidateAndSetFile(IBrowserFile file)
+    {
+        var ext = Path.GetExtension(file.Name).ToLowerInvariant();
+        if (ext != ".pdf" && ext != ".docx")
+        {
+            ErrorMessage = "Solo se permiten documentos en formato PDF (.pdf) o Word (.docx).";
+            SelectedFile = null;
+            return;
+        }
+
+        if (file.Size > DocumentReaderService.MaxFileSizeInBytes)
+        {
+            ErrorMessage = "El archivo excede el tamaño máximo permitido de 15 MB.";
+            SelectedFile = null;
+            return;
+        }
+
+        SelectedFile = file;
+    }
+
+    private void ClearSelectedFile()
+    {
+        SelectedFile = null;
+        ErrorMessage = null;
+    }
+
+    private async Task StartAuditAsync()
+    {
+        if (SelectedFile == null) return;
+
+        using var timerCts = new CancellationTokenSource();
+        try
+        {
+            IsProcessing = true;
+            ErrorMessage = null;
+            AuditFileName = SelectedFile.Name;
+            ElapsedSeconds = 0;
+            ProcessingProgress = 12;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    while (!timerCts.Token.IsCancellationRequested)
+                    {
+                        await Task.Delay(1000, timerCts.Token);
+                        ElapsedSeconds++;
+                        if (ProcessingProgress < 92)
+                        {
+                            ProcessingProgress = Math.Min(92, ProcessingProgress + (ProcessingProgress < 60 ? 4 : 2));
+                        }
+                        await InvokeAsync(StateHasChanged);
+                    }
+                }
+                catch (OperationCanceledException) { }
+            }, timerCts.Token);
+
+            ProcessingStatusMessage = "Extrayendo y sanitizando el texto del documento...";
+            ProcessingProgress = 25;
+            StateHasChanged();
+
+            var documentText = await DocumentReader.ExtractTextAsync(SelectedFile);
+
+            ProcessingStatusMessage = "Auditoría legal con Google Gemini...";
+            ProcessingProgress = Math.Max(ProcessingProgress, 45);
+            StateHasChanged();
+
+            var result = await GeminiService.AuditDocumentAsync(documentText);
+
+            timerCts.Cancel();
+            ProcessingStatusMessage = "Consolidando métricas, alertas y contrapropuestas...";
+            ProcessingProgress = 100;
+            StateHasChanged();
+
+            await Task.Delay(500);
+            AnalysisData = result;
+            ActiveTab = "summary";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = ex.Message;
+        }
+        finally
+        {
+            timerCts.Cancel();
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private void ResetAnalysis()
+    {
+        AnalysisData = null;
+        SelectedFile = null;
+        ErrorMessage = null;
+        ActiveTab = "summary";
+        ElapsedSeconds = 0;
+        ProcessingProgress = 0;
+    }
+}

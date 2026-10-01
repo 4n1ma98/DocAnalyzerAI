@@ -1,0 +1,88 @@
+@namespace DocAnalyzerAI.Components.Audit
+@inject IJSRuntime JS
+
+<!-- InputFile SIEMPRE se mantiene en el DOM para que Blazor pueda transmitir el flujo de bytes sin errores -->
+<InputFile id="fileUploadInput" 
+           OnChange="OnFileSelected" 
+           accept=".pdf,.docx"
+           style="display: none;" />
+
+@if (SelectedFile == null)
+{
+    <div id="dropzoneArea" class="dropzone-container" onclick="document.getElementById('fileUploadInput').click();">
+        <div class="dropzone-content">
+            <div class="dropzone-icon">
+                <i class="bi bi-cloud-arrow-up-fill"></i>
+            </div>
+            <h4 class="fw-bold mb-2">Arrastra tu contrato aquí o haz clic para seleccionarlo</h4>
+            <p class="text-muted mb-3">Compatible con archivos PDF y Microsoft Word (.docx)</p>
+            
+            <button type="button" class="btn btn-outline-primary px-4 py-2 rounded-pill fw-semibold" onclick="document.getElementById('fileUploadInput').click();">
+                <i class="bi bi-folder2-open me-2"></i>Examinar archivo
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="p-4 bg-white rounded-4 border shadow-sm d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="bg-primary text-white p-3 rounded-3 shadow-sm">
+                <i class="bi @GetFileIcon(SelectedFile.Name) fs-2"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-1 text-dark">@SelectedFile.Name</h5>
+                <div class="text-muted small">
+                    <span class="badge bg-secondary-subtle text-secondary me-2">@FormatFileSize(SelectedFile.Size)</span>
+                    <i class="bi bi-check2-circle text-success me-1"></i> Documento listo para auditoría
+                </div>
+            </div>
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary px-3 py-2 fw-semibold" @onclick="OnClearFile" disabled="@IsProcessing">
+                <i class="bi bi-arrow-repeat me-1"></i>Cambiar
+            </button>
+            <button class="btn btn-primary px-4 py-2 fw-bold shadow-sm" @onclick="OnStartAudit" disabled="@IsProcessing">
+                <i class="bi bi-search me-2"></i>Iniciar Análisis
+            </button>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public IBrowserFile? SelectedFile { get; set; }
+    [Parameter] public EventCallback<InputFileChangeEventArgs> OnFileSelected { get; set; }
+    [Parameter] public EventCallback OnClearFile { get; set; }
+    [Parameter] public EventCallback OnStartAudit { get; set; }
+    [Parameter] public bool IsProcessing { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (SelectedFile == null && !IsProcessing)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("docAnalyzer.initDropZoneById", "dropzoneArea", "fileUploadInput");
+            }
+            catch { }
+        }
+    }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+            return $"{bytes / 1024.0 / 1024.0:F2} MB";
+        return $"{bytes / 1024.0:F1} KB";
+    }
+
+    private static string GetFileIcon(string fileName)
+    {
+        var ext = Path.GetExtension(fileName).ToLowerInvariant();
+        return ext switch
+        {
+            ".pdf" => "bi-file-earmark-pdf-fill text-danger",
+            ".docx" => "bi-file-earmark-word-fill text-primary",
+            _ => "bi-file-earmark-text-fill"
+        };
+    }
+}

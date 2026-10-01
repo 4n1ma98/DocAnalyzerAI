@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocAnalyzer AI - Opción C: Split View Document Review</title>
+    <!-- Bootstrap 5.3 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts: Space Grotesk & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-app: #f8fafc;
+            --panel-left: #ffffff;
+            --panel-right: #f8fafc;
+            --border-split: #e2e8f0;
+            --text-heading: #0f172a;
+            --text-doc: #1e293b;
+        }
+
+        [data-bs-theme="dark"] {
+            --bg-app: #0b0f17;
+            --panel-left: #111722;
+            --panel-right: #0b0f17;
+            --border-split: #1e293b;
+            --text-heading: #f8fafc;
+            --text-doc: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-app);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .split-navbar {
+            background-color: var(--panel-left);
+            border-bottom: 1px solid var(--border-split);
+            height: 60px;
+        }
+
+        .split-container {
+            height: calc(100vh - 60px);
+        }
+
+        /* Panel Izquierdo: Visor de Documento */
+        .doc-viewer-pane {
+            background-color: var(--panel-left);
+            border-right: 1px solid var(--border-split);
+            height: 100%;
+            overflow-y: auto;
+            padding: 2.5rem;
+        }
+
+        .doc-page-simulation {
+            max-width: 720px;
+            margin: 0 auto;
+            font-family: 'Times New Roman', Georgia, serif;
+            font-size: 1.05rem;
+            line-height: 1.75;
+            color: var(--text-doc);
+        }
+
+        /* Marcadores y Resaltados en el Documento */
+        .highlight-critical {
+            background-color: rgba(239, 68, 68, 0.2);
+            border-bottom: 2px solid #ef4444;
+            padding: 2px 4px;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .highlight-critical:hover {
+            background-color: rgba(239, 68, 68, 0.35);
+        }
+
+        .highlight-warning {
+            background-color: rgba(234, 179, 8, 0.2);
+            border-bottom: 2px solid #eab308;
+            padding: 2px 4px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        /* Panel Derecho: AI Auditor Inspector */
+        .ai-inspector-pane {
+            background-color: var(--panel-right);
+            height: 100%;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .card-inspector {
+            background-color: var(--panel-left);
+            border: 1px solid var(--border-split);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card-inspector.active {
+            border: 2px solid #6366f1;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+        }
+
+        /* Redline Diff */
+        .diff-deleted {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: #dc2626;
+            text-decoration: line-through;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+        .diff-added {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: #059669;
+            font-weight: 500;
+            padding: 1px 4px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header / Navbar -->
+    <nav class="navbar split-navbar px-3">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            
+            <div class="d-flex align-items-center gap-3">
+                <span class="fw-bold fs-5 text-primary"><i class="bi bi-layout-split me-2"></i>DocAnalyzer AI</span>
+                <span class="badge bg-secondary-subtle text-secondary">Opción C: Split View</span>
+                <div class="vr mx-2"></div>
+                <div class="small text-muted text-truncate" style="max-width: 280px;">
+                    <i class="bi bi-file-earmark-pdf text-danger me-1"></i> Contrato_Individual_Trabajo_2026.pdf
+                </div>
+            </div>
+
+            <!-- Controles Rápidos -->
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-2 small">
+                    <span class="text-muted">Jurisdicción:</span>
+                    <strong class="text-dark">🇨🇴 Colombia (2026)</strong>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 small">
+                    <span class="text-muted">Perspectiva:</span>
+                    <span class="badge bg-primary-subtle text-primary">Trabajador</span>
+                </div>
+
+                <div class="vr mx-1"></div>
+
+                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="toggleTheme()" id="themeBtn">
+                    <i class="bi bi-moon-stars" id="themeIcon"></i>
+                </button>
+            </div>
+
+        </div>
+    </nav>
+
+    <!-- Contenedor Principal Dividido -->
+    <div class="container-fluid p-0 split-container">
+        <div class="row g-0 h-100">
+            
+            <!-- PANEL IZQUIERDO: TEXTO DEL CONTRATO CON RESALTADOS INTERACTIVOS -->
+            <div class="col-md-6 doc-viewer-pane">
+                <div class="doc-page-simulation">
+                    <div class="text-center mb-4 pb-3 border-bottom">
+                        <h4 class="fw-bold mb-1">CONTRATO INDIVIDUAL DE TRABAJO A TÉRMINO INDEFINIDO</h4>
+                        <p class="small text-muted mb-0">Celebrado entre TECH INNOVATIONS S.A.S. y EL TRABAJADOR</p>
+                    </div>
+
+                    <p>
+                        Entre los suscritos a saber, <strong>TECH INNOVATIONS S.A.S.</strong>, sociedad legalmente constituida, y por la otra parte el <strong>TRABAJADOR</strong>, se conviene el presente contrato que se regirá por las siguientes cláusulas:
+                    </p>
+
+                    <p>
+                        <strong>CLÁUSULA PRIMERA. - OBJETO:</strong> La EMPRESA contrata los servicios personales del TRABAJADOR para desempeñar el cargo de Desarrollador Full-Stack Senior, realizando tareas de programación y despliegue continuo.
+                    </p>
+
+                    <p>
+                        <strong>CLÁUSULA QUINTA. - JORNADA DE TRABAJO:</strong> 
+                        <span class="highlight-critical" title="Click para ver dictamen de esta cláusula" onclick="focusCard('card-jornada')">
+                            Por la naturaleza técnica y la alta confidencialidad del rol, el TRABAJADOR se clasifica expresamente como Personal de Dirección, Confianza y Manejo conforme al artículo 162 del CST. En virtud de ello, se pacta disponibilidad permanente 24/7 sin derecho al reconocimiento de horas extras ni recargos nocturnos o festivos.
+                        </span>
+                    </p>
+
+                    <p>
+                        <strong>CLÁUSULA SEXTA. - DESCUENTOS Y RESPONSABILIDAD:</strong>
+                        <span class="highlight-critical" title="Click para ver dictamen" onclick="focusCard('card-descuentos')">
+                            El TRABAJADOR responderá directamente con su salario y liquidación final por cualquier caída de producción, bugs en software o sobrecostos en plataformas de nube (AWS/Azure) generados bajo su custodia.
+                        </span>
+                    </p>
+
+                    <p>
+                        <strong>CLÁUSULA NOVENA. - PROPIEDAD INTELECTUAL:</strong>
+                        <span class="highlight-warning" title="Click para ver ambigüedad">
+                            Todos los inventos, algoritmos, proyectos o ideas creadas por el trabajador durante la vigencia del contrato, incluso en fines de semana o con equipos propios, serán propiedad exclusiva y perpetua de la EMPRESA.
+                        </span>
+                    </p>
+
+                    <p>
+                        <strong>CLÁUSULA DÉCIMA. - TERMINACIÓN:</strong> Serán justas causas de despido inmediato y sin derecho a descargos la omisión del cumplimiento de más de dos historias de usuario o sprints en el mes.
+                    </p>
+                </div>
+            </div>
+
+            <!-- PANEL DERECHO: INSPECTOR AI DE AUDITORÍA -->
+            <div class="col-md-6 ai-inspector-pane">
+                
+                <!-- Encabezado del Inspector con Resumen de Riesgo -->
+                <div class="card-inspector p-3 mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-danger text-white fs-6 px-3 py-1">Score: 82 / 100</span>
+                            <span class="fw-bold text-danger">Riesgo Severo Detectado</span>
+                        </div>
+                        <div class="small text-muted">
+                            <i class="bi bi-shield-x text-danger me-1"></i> 3 Cláusulas Nulas
+                        </div>
+                    </div>
+                    <p class="small text-muted mb-0">
+                        El documento trasgrede normas de orden público laboral (CST y Ley 2101/2021 de jornada 42h). Haz clic en cualquier tarjeta para ver la propuesta de redacción alternativa.
+                    </p>
+                </div>
+
+                <!-- Filtros de Hallazgos -->
+                <div class="d-flex gap-2 mb-3">
+                    <button class="btn btn-sm btn-dark rounded-pill px-3">Todos (5)</button>
+                    <button class="btn btn-sm btn-outline-danger rounded-pill px-3">Críticos (3)</button>
+                    <button class="btn btn-sm btn-outline-warning rounded-pill px-3">Ambigüedades (2)</button>
+                </div>
+
+                <!-- Tarjeta 1: Jornada (Enfocable) -->
+                <div class="card-inspector p-3 mb-3 active" id="card-jornada">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge bg-danger-subtle text-danger small">Cláusula Quinta &bull; Red Flag Crítico</span>
+                        <span class="small text-muted"><i class="bi bi-clock-history me-1"></i>Ley 2101 / 2021 (42h)</span>
+                    </div>
+
+                    <h6 class="fw-bold text-danger mb-2">Jornada Ilegal &bull; Simulación de Personal de Confianza</h6>
+
+                    <div class="small text-muted mb-3">
+                        <strong>Dictamen:</strong> Los cargos técnicos no pueden ser rotulados como dirección y confianza para despojarlos del límite de 42 horas semanales ni de la desconexión laboral (Ley 2191/2022).
+                    </div>
+
+                    <!-- Visual Diff de Negociación -->
+                    <div class="p-3 bg-light rounded-3 border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small fw-bold text-success"><i class="bi bi-pen me-1"></i>Redline / Contrapropuesta:</span>
+                            <button class="btn btn-sm btn-outline-success py-0 px-2" onclick="alert('Copiado!')">Copiar</button>
+                        </div>
+                        <div class="small lh-base">
+                            La jornada ordinaria será de <span class="diff-deleted">disponibilidad permanente 24/7 sin derecho a horas extras</span> <span class="diff-added">máximo 42 horas semanales, liquidando trabajo suplementario y guardias de disponibilidad conforme al CST</span>.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tarjeta 2: Descuentos y Nube -->
+                <div class="card-inspector p-3 mb-3" id="card-descuentos">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="badge bg-danger-subtle text-danger small">Cláusula Sexta &bull; Red Flag Crítico</span>
+                        <span class="small text-muted">Art. 28 y 149 CST</span>
+                    </div>
+
+                    <h6 class="fw-bold text-danger mb-2">Deducciones Salariales Ilegales por Riesgo Operacional</h6>
+
+                    <div class="small text-muted mb-3">
+                        <strong>Dictamen:</strong> El trabajador nunca asume los riesgos o pérdidas de la empresa (bugs o costos en AWS/Azure). Los descuentos requieren autorización judicial o escrita libre posterior a los hechos.
+                    </div>
+
+                    <!-- Visual Diff de Negociación -->
+                    <div class="p-3 bg-light rounded-3 border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small fw-bold text-success"><i class="bi bi-pen me-1"></i>Redline / Contrapropuesta:</span>
+                            <button class="btn btn-sm btn-outline-success py-0 px-2" onclick="alert('Copiado!')">Copiar</button>
+                        </div>
+                        <div class="small lh-base">
+                            <span class="diff-deleted">El TRABAJADOR responderá directamente con su salario por cualquier caída de producción o costos en la nube.</span> <span class="diff-added">La EMPRESA asume los riesgos operacionales inherentes a la actividad tecnológica según el Art. 28 del CST.</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-bs-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', target);
+            
+            const icon = document.getElementById('themeIcon');
+            if (target === 'dark') {
+                icon.className = 'bi bi-sun';
+            } else {
+                icon.className = 'bi bi-moon-stars';
+            }
+        }
+
+        function focusCard(cardId) {
+            document.querySelectorAll('.card-inspector').forEach(c => c.classList.remove('active'));
+            const card = document.getElementById(cardId);
+            if (card) {
+                card.classList.add('active');
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
