@@ -1,0 +1,45 @@
+@namespace DocAnalyzerAI.Components.Audit
+@using DocAnalyzerAI.Models
+
+@if (Items == null || Items.Count == 0)
+{
+    <div class="alert alert-secondary text-center p-4 rounded-4">
+        <i class="bi bi-check2-circle fs-3 d-block mb-2 text-success"></i>
+        No se detectaron puntos débiles o ambigüedades notables.
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var weakness in Items)
+        {
+            <div class="col-12">
+                <div class="finding-card weakness-card p-4 shadow-sm">
+                    <div class="d-flex align-items-start justify-content-between mb-2">
+                        <h5 class="fw-bold text-warning mb-1">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>@weakness.Title
+                        </h5>
+                        <span class="badge bg-warning-subtle text-warning border border-warning-subtle">Ambigüedad / Desfavorable</span>
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(weakness.PotentialImpact))
+                    {
+                        <div class="mb-2">
+                            <strong class="text-secondary small text-uppercase">Impacto Potencial:</strong>
+                            <p class="text-dark mb-0 mt-1">@weakness.PotentialImpact</p>
+                        </div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(weakness.OriginalClause))
+                    {
+                        <div class="clause-quote-box mt-3">
+                            <strong>Cláusula original:</strong> &ldquo;@weakness.OriginalClause&rdquo;
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public List<PointItem> Items { get; set; } = [];
+}

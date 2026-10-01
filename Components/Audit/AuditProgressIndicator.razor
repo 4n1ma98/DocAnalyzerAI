@@ -1,0 +1,45 @@
+@namespace DocAnalyzerAI.Components.Audit
+
+<div class="row justify-content-center my-5">
+    <div class="col-md-8 col-lg-6 text-center">
+        <div class="card border-0 shadow-sm rounded-4 p-5">
+            <div class="spinner-border text-primary mb-4" style="width: 4rem; height: 4rem;" role="status">
+                <span class="visually-hidden">Cargando...</span>
+            </div>
+            <h4 class="fw-bold text-dark mb-2">Auditoría Legal en Progreso</h4>
+            <p class="text-muted mb-4 fs-6">@StatusMessage</p>
+            
+            <!-- Indicadores de Porcentaje y Tiempo Transcurrido -->
+            <div class="d-flex justify-content-between align-items-center mb-2 px-1">
+                <span class="badge bg-light text-secondary border px-3 py-2 fw-semibold">
+                    <i class="bi bi-stopwatch me-1 text-primary"></i> Tiempo: <strong class="text-dark ms-1">@ElapsedSeconds s</strong>
+                </span>
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fs-6 fw-bold">
+                    @Progress%
+                </span>
+            </div>
+
+            <!-- Barra de Progreso -->
+            <div class="progress shadow-sm" style="height: 12px; border-radius: 6px; background-color: #e2e8f0;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" 
+                     role="progressbar" 
+                     style="width: @(Progress)%; transition: width 0.4s ease;" 
+                     aria-valuenow="@Progress" 
+                     aria-valuemin="0" 
+                     aria-valuemax="100">
+                </div>
+            </div>
+
+            <div class="mt-4 small text-secondary d-flex align-items-center justify-content-center gap-2">
+                <i class="bi bi-shield-check text-success fs-5"></i>
+                <span>Auditando bajo la legislación aplicable vigente a 2026</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public string StatusMessage { get; set; } = string.Empty;
+    [Parameter] public int Progress { get; set; }
+    [Parameter] public int ElapsedSeconds { get; set; }
+}

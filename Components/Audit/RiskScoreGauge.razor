@@ -1,0 +1,43 @@
+@namespace DocAnalyzerAI.Components.Audit
+
+<div class="col-md-4 d-flex align-items-center justify-content-md-end gap-3 mt-3 mt-md-0">
+    <div class="text-end">
+        <div class="small text-muted fw-semibold">SCORE DE RIESGO</div>
+        <div class="fw-bold text-uppercase @GetRiskTextColor(Score)">
+            @GetRiskLabel(Score)
+        </div>
+    </div>
+    <div class="score-badge-circle @GetRiskBadgeClass(Score)">
+        <span class="fs-4">@Score</span>
+        <span style="font-size: 0.65rem;">/ 100</span>
+    </div>
+    <button class="btn btn-outline-secondary btn-sm ms-2" @onclick="OnReset" title="Auditar otro documento">
+        <i class="bi bi-arrow-clockwise me-1"></i>Nuevo
+    </button>
+</div>
+
+@code {
+    [Parameter] public int Score { get; set; }
+    [Parameter] public EventCallback OnReset { get; set; }
+
+    private static string GetRiskLabel(int score)
+    {
+        if (score < 30) return "Bajo Riesgo / Equilibrado";
+        if (score <= 70) return "Riesgo Moderado / Alertas";
+        return "Riesgo Crítico / Cláusulas Abusivas";
+    }
+
+    private static string GetRiskTextColor(int score)
+    {
+        if (score < 30) return "text-success";
+        if (score <= 70) return "text-warning";
+        return "text-danger";
+    }
+
+    private static string GetRiskBadgeClass(int score)
+    {
+        if (score < 30) return "score-badge-green";
+        if (score <= 70) return "score-badge-yellow";
+        return "score-badge-red";
+    }
+}

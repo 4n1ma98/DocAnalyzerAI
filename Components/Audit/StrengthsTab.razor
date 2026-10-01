@@ -1,0 +1,39 @@
+@namespace DocAnalyzerAI.Components.Audit
+@using DocAnalyzerAI.Models
+
+@if (Items == null || Items.Count == 0)
+{
+    <div class="alert alert-secondary text-center p-4 rounded-4">
+        <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+        No se detectaron puntos explícitamente favorables para la parte usuaria en este documento.
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var strength in Items)
+        {
+            <div class="col-12">
+                <div class="finding-card strength-card p-4 shadow-sm">
+                    <div class="d-flex align-items-start justify-content-between mb-2">
+                        <h5 class="fw-bold text-success mb-1">
+                            <i class="bi bi-shield-check me-2"></i>@strength.Title
+                        </h5>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">Favorable</span>
+                    </div>
+                    <p class="text-dark mb-3">@strength.Description</p>
+                    @if (!string.IsNullOrWhiteSpace(strength.OriginalClause))
+                    {
+                        <div class="clause-quote-box">
+                            <strong>Cláusula textual:</strong> &ldquo;@strength.OriginalClause&rdquo;
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public List<PointItem> Items { get; set; } = [];
+}

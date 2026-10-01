@@ -1,0 +1,96 @@
+@namespace DocAnalyzerAI.Components.Audit
+@using DocAnalyzerAI.Models
+@inject IJSRuntime JS
+
+@if (Suggestions == null || Suggestions.Count == 0)
+{
+    <div class="alert alert-secondary text-center p-4 rounded-4">
+        <i class="bi bi-chat-dots fs-3 d-block mb-2"></i>
+        No se generaron contrapropuestas de redacción específicas para este documento.
+    </div>
+}
+else
+{
+    <div class="d-flex align-items-center justify-content-between mb-3">
+        <h4 class="h5 fw-bold mb-0">
+            <i class="bi bi-pencil-square text-primary me-2"></i> Propuestas de Redacción para Negociación
+        </h4>
+        <span class="text-muted small">Copia el texto propuesto directamente para enviar a tu contraparte</span>
+    </div>
+
+    <div class="row g-4">
+        @for (int i = 0; i < Suggestions.Count; i++)
+        {
+            var index = i;
+            var item = Suggestions[index];
+            <div class="col-12">
+                <div class="card border-0 shadow-sm rounded-4 p-4">
+                    <div class="row g-4">
+                        <!-- Cláusula Actual -->
+                        <div class="col-lg-6 border-end-lg">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="badge bg-secondary-subtle text-secondary">Original Desfavorable</span>
+                            </div>
+                            <div class="clause-quote-box">
+                                &ldquo;@item.CurrentClause&rdquo;
+                            </div>
+                            <div class="mt-3">
+                                <span class="text-secondary small fw-semibold text-uppercase">Fundamento de Cambio:</span>
+                                <p class="small text-muted mt-1 mb-0">@item.Justification</p>
+                            </div>
+                        </div>
+
+                        <!-- Contrapropuesta Sugerida -->
+                        <div class="col-lg-6">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <span class="badge bg-success-subtle text-success">Contraoferta Sugerida</span>
+                                
+                                <div class="d-flex align-items-center gap-2">
+                                    @if (CopiedIndex == index)
+                                    {
+                                        <span class="badge-copied">
+                                            <i class="bi bi-check2"></i> ¡Copiado!
+                                        </span>
+                                    }
+                                    <button class="btn btn-outline-success btn-sm px-3" 
+                                            @onclick="() => CopyToClipboard(item.SuggestedAlternative, index)">
+                                        <i class="bi bi-clipboard me-1"></i> Copiar
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="counter-offer-box">@item.SuggestedAlternative</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public List<CounterProposal> Suggestions { get; set; } = [];
+    private int? CopiedIndex;
+
+    private async Task CopyToClipboard(string text, int index)
+    {
+        try
+        {
+            var success = await JS.InvokeAsync<bool>("docAnalyzer.copyToClipboard", text);
+            if (success)
+            {
+                CopiedIndex = index;
+                StateHasChanged();
+                _ = Task.Run(async () =>
+                {
+                    await Task.Delay(2500);
+                    if (CopiedIndex == index)
+                    {
+                        CopiedIndex = null;
+                        await InvokeAsync(StateHasChanged);
+                    }
+                });
+            }
+        }
+        catch { }
+    }
+}

@@ -1,0 +1,174 @@
+:root {
+    --primary-color: #1e3a8a;
+    --primary-hover: #1e40af;
+    --secondary-color: #0f172a;
+    --success-bg: #f0fdf4;
+    --success-border: #bbf7d0;
+    --success-text: #166534;
+    --warning-bg: #fffbeb;
+    --warning-border: #fde68a;
+    --warning-text: #92400e;
+    --danger-bg: #fef2f2;
+    --danger-border: #fecaca;
+    --danger-text: #991b1b;
+}
+
+body {
+    background-color: #f8fafc;
+    color: #1e293b;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+/* Hero / Header */
+.doc-header-card {
+    background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    color: #ffffff;
+    border-radius: 1rem;
+    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
+}
+
+/* Drag and Drop Zone */
+.dropzone-container {
+    border: 2px dashed #cbd5e1;
+    border-radius: 1rem;
+    background-color: #ffffff;
+    padding: 3rem 1.5rem;
+    text-align: center;
+    transition: all 0.25s ease-in-out;
+    cursor: pointer;
+    position: relative;
+}
+
+.dropzone-container:hover, .dropzone-container.drag-active {
+    border-color: #2563eb;
+    background-color: #eff6ff;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.1);
+}
+
+.dropzone-icon {
+    font-size: 3.5rem;
+    color: #2563eb;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+/* File selected preview pill */
+.selected-file-badge {
+    background-color: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1.25rem;
+}
+
+/* Risk Score Gauge / Badge */
+.score-badge-circle {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.score-badge-green {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: #ffffff;
+}
+
+.score-badge-yellow {
+    background: linear-gradient(135deg, #eab308, #ca8a04);
+    color: #ffffff;
+}
+
+.score-badge-red {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #ffffff;
+}
+
+/* Feature & Finding Cards */
+.finding-card {
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: #ffffff;
+}
+
+.finding-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+}
+
+.strength-card {
+    border-left: 5px solid #22c55e;
+}
+
+.weakness-card {
+    border-left: 5px solid #f59e0b;
+}
+
+.redflag-card {
+    border-left: 5px solid #ef4444;
+}
+
+.clause-quote-box {
+    background-color: #f8fafc;
+    border-left: 3px solid #94a3b8;
+    font-style: italic;
+    font-size: 0.92rem;
+    color: #475569;
+    padding: 0.75rem 1rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.counter-offer-box {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-left: 4px solid #16a34a;
+    padding: 0.85rem 1rem;
+    border-radius: 0.5rem;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 0.95rem;
+    color: #14532d;
+    white-space: pre-wrap;
+}
+
+/* Tab Styling */
+.nav-pills-custom .nav-link {
+    color: #475569;
+    font-weight: 600;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.5rem;
+    transition: all 0.2s;
+}
+
+.nav-pills-custom .nav-link.active {
+    background-color: #1e3a8a;
+    color: #ffffff;
+    box-shadow: 0 4px 10px rgba(30, 58, 138, 0.25);
+}
+
+.nav-pills-custom .nav-link:hover:not(.active) {
+    background-color: #e2e8f0;
+    color: #0f172a;
+}
+
+/* Copied toast badge */
+.badge-copied {
+    background-color: #15803d;
+    color: white;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 0.35rem;
+    animation: fadeInOut 2s forwards;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(-4px); }
+    15% { opacity: 1; transform: translateY(0); }
+    85% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-4px); }
+}

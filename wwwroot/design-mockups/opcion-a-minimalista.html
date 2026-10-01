@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocAnalyzer AI - Opción A: SaaS Minimalista</title>
+    <!-- Bootstrap 5.3 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --primary-accent: #6366f1;
+            --primary-accent-rgb: 99, 102, 241;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        [data-bs-theme="dark"] {
+            --bg-body: #090d16;
+            --card-bg: #111827;
+            --border-color: #1f2937;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        .navbar-minimal {
+            background-color: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.85rem 1.5rem;
+        }
+
+        .card-custom {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .hero-banner {
+            background: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.08) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 80%, rgba(236, 72, 153, 0.06) 0%, transparent 40%);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2.25rem;
+        }
+
+        /* Pill Switches & Custom Selects */
+        .config-pill {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 0.5rem 0.85rem;
+        }
+
+        .perspective-switch {
+            display: inline-flex;
+            background: var(--bg-body);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 3px;
+        }
+        .perspective-switch .btn-check:checked + .btn {
+            background-color: var(--primary-accent);
+            color: #fff;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.25);
+        }
+        .perspective-switch .btn {
+            border-radius: 8px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            padding: 0.35rem 0.85rem;
+            border: none;
+            color: var(--text-muted);
+        }
+
+        /* Dropzone */
+        .dropzone-saas {
+            border: 2px dashed var(--border-color);
+            border-radius: 14px;
+            background-color: var(--card-bg);
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .dropzone-saas:hover {
+            border-color: var(--primary-accent);
+            background-color: rgba(99, 102, 241, 0.03);
+        }
+
+        /* Gauge / Score */
+        .score-circle {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            font-weight: 800;
+        }
+        .score-high {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border: 2px solid #ef4444;
+        }
+
+        /* Sub scores bar */
+        .sub-score-bar {
+            height: 6px;
+            border-radius: 4px;
+            background: var(--border-color);
+            overflow: hidden;
+        }
+
+        .clause-box {
+            background: var(--bg-body);
+            border-left: 3px solid #6366f1;
+            border-radius: 0 8px 8px 0;
+            padding: 0.85rem 1.1rem;
+            font-size: 0.9rem;
+            color: var(--text-main);
+        }
+        .clause-box.danger {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .counter-box {
+            background: rgba(16, 185, 129, 0.05);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 8px;
+            padding: 0.85rem 1.1rem;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        .nav-tabs-minimal .nav-link {
+            color: var(--text-muted);
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-weight: 500;
+            padding: 0.65rem 1.15rem;
+        }
+        .nav-tabs-minimal .nav-link.active {
+            color: var(--primary-accent);
+            border-bottom: 2px solid var(--primary-accent);
+            background: transparent;
+        }
+
+        .otrosi-badge {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-accent);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            font-size: 0.78rem;
+            border-radius: 6px;
+            padding: 0.25rem 0.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navbar Minimalista -->
+    <nav class="navbar navbar-minimal sticky-top">
+        <div class="container-fluid px-lg-4">
+            <div class="d-flex align-items-center gap-2">
+                <span class="d-inline-flex align-items-center justify-content-center bg-primary text-white rounded-3 p-2" style="width: 32px; height: 32px;">
+                    <i class="bi bi-shield-check fs-6"></i>
+                </span>
+                <span class="fw-bold tracking-tight">DocAnalyzer<span class="text-primary">.AI</span></span>
+                <span class="badge bg-secondary-subtle text-secondary small ms-2 px-2 py-1">Opción A: SaaS Minimal</span>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <!-- Theme Toggle Button -->
+                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="toggleTheme()" id="themeBtn">
+                    <i class="bi bi-moon-stars me-1" id="themeIcon"></i> <span id="themeText">Modo Oscuro</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-lg-5 py-4">
+
+        <!-- Barra Superior de Configuración Pre-Análisis -->
+        <div class="card-custom p-3 mb-4">
+            <div class="row g-3 align-items-center">
+                <!-- Selector País / Jurisdicción -->
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1 fw-semibold"><i class="bi bi-geo-alt me-1 text-primary"></i>Jurisdicción Legal</label>
+                    <select class="form-select form-select-sm config-pill">
+                        <option value="colombia" selected>🇨🇴 Colombia (Vigencia 2026)</option>
+                        <option value="mexico">🇲🇽 México (LFT 2026)</option>
+                        <option value="espana">🇪🇸 España (Estatuto Trabajadores)</option>
+                        <option value="usa">🇺🇸 EE.UU. (Comercial / Delaware)</option>
+                        <option value="intl">🌐 Estándar Internacional</option>
+                    </select>
+                </div>
+
+                <!-- Selector Tipo de Contrato -->
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1 fw-semibold"><i class="bi bi-file-earmark-ruled me-1 text-primary"></i>Tipo de Contrato</label>
+                    <select class="form-select form-select-sm config-pill">
+                        <option value="laboral" selected>Laboral / Dependiente</option>
+                        <option value="servicios">Prestación de Servicios (Civil/Comercial)</option>
+                        <option value="nda">Acuerdo Confidencialidad (NDA)</option>
+                        <option value="proveedor">Suministro / Proveedor B2B</option>
+                    </select>
+                </div>
+
+                <!-- Perspectiva (Rol) -->
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1 fw-semibold"><i class="bi bi-person-bounding-box me-1 text-primary"></i>Perspectiva de Análisis</label>
+                    <div class="perspective-switch d-block text-center">
+                        <input type="radio" class="btn-check" name="perspectiva" id="rolTrabajador" checked>
+                        <label class="btn w-50" for="rolTrabajador">Trabajador / Contratista</label>
+
+                        <input type="radio" class="btn-check" name="perspectiva" id="rolEmpresa">
+                        <label class="btn w-50" for="rolEmpresa">Empresa / Contratante</label>
+                    </div>
+                </div>
+
+                <!-- Documentos Adicionales / Otro Sí -->
+                <div class="col-md-3">
+                    <label class="form-label small text-muted mb-1 fw-semibold"><i class="bi bi-paperclip me-1 text-primary"></i>Anexos / "Otro Sí"</label>
+                    <button class="btn btn-sm btn-outline-primary w-100 py-1 rounded-3">
+                        <i class="bi bi-plus-circle me-1"></i> Añadir Otro Sí / Adenda
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard de Resultados con desglose de riesgo -->
+        <div class="row g-4">
+            
+            <!-- Columna Izquierda: Métricas Globales y Desglose de Score -->
+            <div class="col-xl-3 col-lg-4">
+                <div class="card-custom p-4 mb-4">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <span class="small text-muted fw-semibold text-uppercase">Nivel de Riesgo Global</span>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">Crítico</span>
+                    </div>
+
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="score-circle score-high">
+                            <span class="fs-3 lh-1">78</span>
+                            <span style="font-size: 0.65rem;">/ 100</span>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Alto Riesgo</h6>
+                            <p class="small text-muted mb-0">Contiene 3 cláusulas leoninas e infracción al CST 2026.</p>
+                        </div>
+                    </div>
+
+                    <!-- Desglose Multidimensional de Sub-Scores -->
+                    <h6 class="fw-semibold small text-muted text-uppercase mb-3">Desglose de Riesgos</h6>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>Económico & Deducciones</span>
+                            <strong class="text-danger">85%</strong>
+                        </div>
+                        <div class="sub-score-bar">
+                            <div class="bg-danger" style="width: 85%; height: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>Jornada & Disponibilidad (42h)</span>
+                            <strong class="text-danger">90%</strong>
+                        </div>
+                        <div class="sub-score-bar">
+                            <div class="bg-danger" style="width: 90%; height: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>Propiedad Intelectual</span>
+                            <strong class="text-warning">60%</strong>
+                        </div>
+                        <div class="sub-score-bar">
+                            <div class="bg-warning" style="width: 60%; height: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between small mb-1">
+                            <span>Terminación & Penalidades</span>
+                            <strong class="text-success">25%</strong>
+                        </div>
+                        <div class="sub-score-bar">
+                            <div class="bg-success" style="width: 25%; height: 100%;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Archivos Auditados -->
+                    <hr class="my-4 border-secondary-subtle">
+                    <h6 class="fw-semibold small text-muted text-uppercase mb-2">Archivos Procesados</h6>
+                    <div class="d-flex align-items-center gap-2 small mb-2">
+                        <i class="bi bi-file-earmark-pdf text-danger fs-5"></i>
+                        <span class="text-truncate fw-medium">Contrato_Senior_Dev.pdf</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 small">
+                        <i class="bi bi-file-earmark-word text-primary fs-5"></i>
+                        <span class="text-truncate fw-medium">OtroSi_BonoSalarial.docx</span>
+                        <span class="otrosi-badge ms-auto">Otro Sí</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Tabs y Contenido del Análisis -->
+            <div class="col-xl-9 col-lg-8">
+                <div class="card-custom p-4">
+                    
+                    <!-- Tabs Minimalistas -->
+                    <ul class="nav nav-tabs-minimal mb-4 gap-2 border-bottom">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tab-summary" data-bs-toggle="tab"><i class="bi bi-file-text me-1"></i> Resumen Ejecutivo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tab-strengths" data-bs-toggle="tab"><i class="bi bi-shield-check text-success me-1"></i> Puntos Fuertes (2)</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tab-weaknesses" data-bs-toggle="tab"><i class="bi bi-exclamation-triangle text-warning me-1"></i> Ambigüedades (3)</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tab-flags" data-bs-toggle="tab"><i class="bi bi-flag-fill text-danger me-1"></i> Red Flags (3)</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#tab-negotiation" data-bs-toggle="tab"><i class="bi bi-arrow-left-right text-primary me-1"></i> Mesa de Negociación (3)</a>
+                        </li>
+                    </ul>
+
+                    <!-- Contenido Tab Negociación (Ejemplo Activo) -->
+                    <div class="tab-content">
+                        <div class="tab-pane fade show active" id="tab-negotiation">
+                            
+                            <!-- Tarjeta de Negociación 1 -->
+                            <div class="card-custom p-3 mb-3 border">
+                                <div class="row g-3">
+                                    <div class="col-md-6 border-end">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span class="badge bg-danger-subtle text-danger small">Cláusula Original Desfavorable</span>
+                                            <span class="small text-muted">Cláusula 5.2</span>
+                                        </div>
+                                        <div class="clause-box danger mb-2">
+                                            &ldquo;El trabajador acepta prestar turnos de disponibilidad pasiva 24/7 sin derecho a recargos ni pago suplementario, por ser cargo de confianza.&rdquo;
+                                        </div>
+                                        <p class="small text-muted mb-0">
+                                            <strong class="text-danger">Fundamento 2026:</strong> Vulneración Ley 2101 de 2021 (jornada 42h) y Ley 2191 de 2022 (Desconexión laboral). No es cargo directivo real (Art. 162 CST).
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span class="badge bg-success-subtle text-success small">Contraoferta Sugerida</span>
+                                            <button class="btn btn-sm btn-outline-success py-0 px-2 rounded-2" onclick="alert('Copiado al portapapeles')">
+                                                <i class="bi bi-clipboard me-1"></i>Copiar
+                                            </button>
+                                        </div>
+                                        <div class="counter-box mb-2">
+                                            &ldquo;Las guardias de disponibilidad se programarán con preaviso y se remunerarán con un recargo del 30% sobre el valor hora ordinaria, garantizando el descanso ininterrumpido.&rdquo;
+                                        </div>
+                                        <p class="small text-muted mb-0">
+                                            <strong>Estrategia:</strong> Delimita el on-call y fija compensación sin rechazar la necesidad operativa de la empresa.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tarjeta de Negociación 2 -->
+                            <div class="card-custom p-3 border">
+                                <div class="row g-3">
+                                    <div class="col-md-6 border-end">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span class="badge bg-danger-subtle text-danger small">Cláusula Original Desfavorable</span>
+                                            <span class="small text-muted">Cláusula 9.1</span>
+                                        </div>
+                                        <div class="clause-box danger mb-2">
+                                            &ldquo;Cualquier desarrollo, idea o software creado durante la vigencia del contrato, incluso fuera de horario laboral, será propiedad exclusiva de la empresa.&rdquo;
+                                        </div>
+                                        <p class="small text-muted mb-0">
+                                            <strong class="text-danger">Fundamento:</strong> Violación Ley 23 de 1982 y Ley 1450 de 2011. La cesión patrimonial solo aplica a creaciones hechas en ejecución de las labores contratadas.
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <span class="badge bg-success-subtle text-success small">Contraoferta Sugerida</span>
+                                            <button class="btn btn-sm btn-outline-success py-0 px-2 rounded-2" onclick="alert('Copiado al portapapeles')">
+                                                <i class="bi bi-clipboard me-1"></i>Copiar
+                                            </button>
+                                        </div>
+                                        <div class="counter-box mb-2">
+                                            &ldquo;La cesión de derechos patrimoniales se limitará exclusivamente a las obras y código desarrollados dentro de la jornada y con herramientas proporcionadas por la empresa.&rdquo;
+                                        </div>
+                                        <p class="small text-muted mb-0">
+                                            <strong>Estrategia:</strong> Protege proyectos personales, repositorios open-source y creaciones de fin de semana.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- Script de Cambio de Tema -->
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const current = html.getAttribute('data-bs-theme');
+            const target = current === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', target);
+            
+            const icon = document.getElementById('themeIcon');
+            const text = document.getElementById('themeText');
+            if (target === 'dark') {
+                icon.className = 'bi bi-sun me-1';
+                text.innerText = 'Modo Claro';
+            } else {
+                icon.className = 'bi bi-moon-stars me-1';
+                text.innerText = 'Modo Oscuro';
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
