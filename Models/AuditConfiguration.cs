@@ -13,10 +13,19 @@ public class CountryOption
     public string LegalFramework { get; set; } = string.Empty;
 }
 
+public class ContractAnnexItem
+{
+    public string Id { get; set; } = Guid.NewGuid().ToString("N");
+    public string FileName { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
+    public long Size { get; set; }
+}
+
 public class AuditOptions
 {
     public string CountryCode { get; set; } = "CO";
     public AuditPerspective Perspective { get; set; } = AuditPerspective.Worker;
+    public List<ContractAnnexItem> Annexes { get; set; } = [];
 
     public static readonly List<CountryOption> AvailableCountries =
     [
