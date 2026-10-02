@@ -15,9 +15,9 @@
                 <i class="bi bi-cloud-arrow-up-fill"></i>
             </div>
             <h4 class="fw-bold mb-2">Arrastra tu contrato aquí o haz clic para seleccionarlo</h4>
-            <p class="text-muted mb-3">Compatible con archivos PDF y Microsoft Word (.docx)</p>
+            <p class="text-muted mb-3">Compatible con documentos legales en formato PDF y Microsoft Word (.docx)</p>
             
-            <button type="button" class="btn btn-outline-primary px-4 py-2 rounded-pill fw-semibold" onclick="document.getElementById('fileUploadInput').click();">
+            <button type="button" class="btn btn-browse px-4 py-2 rounded-pill fw-semibold" onclick="document.getElementById('fileUploadInput').click();">
                 <i class="bi bi-folder2-open me-2"></i>Examinar archivo
             </button>
         </div>
@@ -25,25 +25,43 @@
 }
 else
 {
-    <div class="p-4 bg-white rounded-4 border shadow-sm d-flex flex-wrap align-items-center justify-content-between gap-3">
-        <div class="d-flex align-items-center gap-3">
-            <div class="bg-primary text-white p-3 rounded-3 shadow-sm">
-                <i class="bi @GetFileIcon(SelectedFile.Name) fs-2"></i>
+    <div class="selected-file-panel">
+        <!-- Lado izquierdo: Icono de documento y metadatos -->
+        <div class="file-info-group">
+            <div class="file-badge @(IsPdf(SelectedFile.Name) ? "pdf-badge" : "word-badge")">
+                <i class="bi @(IsPdf(SelectedFile.Name) ? "bi-file-earmark-pdf-fill" : "bi-file-earmark-word-fill")"></i>
             </div>
-            <div>
-                <h5 class="fw-bold mb-1 text-dark">@SelectedFile.Name</h5>
-                <div class="text-muted small">
-                    <span class="badge bg-secondary-subtle text-secondary me-2">@FormatFileSize(SelectedFile.Size)</span>
-                    <i class="bi bi-check2-circle text-success me-1"></i> Documento listo para auditoría
+            <div class="file-text-meta">
+                <h5 class="fw-bold mb-1 file-name-heading text-truncate" title="@SelectedFile.Name">
+                    @SelectedFile.Name
+                </h5>
+                <div class="file-pills-row">
+                    <span class="badge file-meta-badge">
+                        <i class="bi bi-hdd-fill me-1 text-muted"></i>@FormatFileSize(SelectedFile.Size)
+                    </span>
+                    <span class="badge file-format-badge">
+                        <i class="bi @(IsPdf(SelectedFile.Name) ? "bi-filetype-pdf" : "bi-filetype-docx") me-1"></i>
+                        @(IsPdf(SelectedFile.Name) ? "PDF" : "DOCX")
+                    </span>
+                    <span class="badge file-status-badge">
+                        <i class="bi bi-check-circle-fill me-1 text-success"></i>Listo para dictamen
+                    </span>
                 </div>
             </div>
         </div>
-        <div class="d-flex gap-2">
-            <button class="btn btn-outline-secondary px-3 py-2 fw-semibold" @onclick="OnClearFile" disabled="@IsProcessing">
-                <i class="bi bi-arrow-repeat me-1"></i>Cambiar
+
+        <!-- Lado derecho: Acciones alineadas a la derecha -->
+        <div class="file-actions-group">
+            <button class="btn btn-change-doc px-3 py-2 fw-semibold" 
+                    @onclick="OnClearFile" 
+                    disabled="@IsProcessing"
+                    title="Cargar un documento diferente">
+                <i class="bi bi-arrow-left-right me-1"></i>Cambiar archivo
             </button>
-            <button class="btn btn-primary px-4 py-2 fw-bold shadow-sm" @onclick="OnStartAudit" disabled="@IsProcessing">
-                <i class="bi bi-search me-2"></i>Iniciar Análisis
+            <button class="btn btn-gold-action px-4 py-2 fw-bold" 
+                    @onclick="OnStartAudit" 
+                    disabled="@IsProcessing">
+                <i class="bi bi-shield-check me-2"></i>Iniciar Análisis
             </button>
         </div>
     </div>
@@ -75,14 +93,8 @@ else
         return $"{bytes / 1024.0:F1} KB";
     }
 
-    private static string GetFileIcon(string fileName)
+    private static bool IsPdf(string fileName)
     {
-        var ext = Path.GetExtension(fileName).ToLowerInvariant();
-        return ext switch
-        {
-            ".pdf" => "bi-file-earmark-pdf-fill text-danger",
-            ".docx" => "bi-file-earmark-word-fill text-primary",
-            _ => "bi-file-earmark-text-fill"
-        };
+        return Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
     }
 }

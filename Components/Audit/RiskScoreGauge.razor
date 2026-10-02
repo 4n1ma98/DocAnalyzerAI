@@ -1,30 +1,67 @@
 @namespace DocAnalyzerAI.Components.Audit
 
-<div class="col-md-4 d-flex align-items-center justify-content-md-end gap-3 mt-3 mt-md-0">
-    <div class="text-end">
-        <div class="small text-muted fw-semibold">SCORE DE RIESGO</div>
-        <div class="fw-bold text-uppercase @GetRiskTextColor(Score)">
+<div class="col-lg-4 col-md-5 d-flex flex-column align-items-center align-items-md-end justify-content-center text-center text-md-end mt-3 mt-md-0">
+    <!-- Tacómetro Semicircular SVG de Temperatura de Riesgo -->
+    <div class="gauge-container mb-2">
+        <svg class="gauge-svg" viewBox="0 0 100 58">
+            <!-- Pista de Fondo Gris -->
+            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(148, 163, 184, 0.2)" stroke-width="8" stroke-linecap="round"/>
+            
+            <!-- Zona Verde (0 a 30) - Bajo Riesgo -->
+            <path d="M 10 50 A 40 40 0 0 1 26.5 17.6" fill="none" stroke="#22c55e" stroke-width="8" stroke-linecap="round"/>
+            
+            <!-- Zona Amarilla (30 a 70) - Riesgo Moderado -->
+            <path d="M 26.5 17.6 A 40 40 0 0 1 73.5 17.6" fill="none" stroke="#f59e0b" stroke-width="8"/>
+            
+            <!-- Zona Roja (70 a 100) - Riesgo Crítico -->
+            <path d="M 73.5 17.6 A 40 40 0 0 1 90 50" fill="none" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
+            
+            <!-- Aguja Dinámica Indicadora (Rota de -90° en verde a +90° en rojo) -->
+            <line x1="50" y1="50" x2="50" y2="16" 
+                  stroke="currentColor" 
+                  stroke-width="3" 
+                  stroke-linecap="round" 
+                  transform="rotate(@RotateAngle, 50, 50)" 
+                  style="transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);" />
+            
+            <!-- Pivote Central -->
+            <circle cx="50" cy="50" r="4.5" fill="currentColor"/>
+        </svg>
+    </div>
+
+    <!-- Valor Numérico y Clasificación -->
+    <div class="d-flex align-items-baseline gap-2 justify-content-center justify-content-md-end">
+        <span class="display-6 fw-bold lh-1 @GetRiskTextColor(Score)">@Score</span>
+        <span class="text-muted fw-semibold fs-6">/ 100</span>
+    </div>
+
+    <div class="mt-1 d-flex align-items-center gap-2 justify-content-center justify-content-md-end">
+        <span class="badge @GetRiskBadgeClass(Score) text-uppercase px-3 py-1">
             @GetRiskLabel(Score)
-        </div>
+        </span>
+
+        <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-0" 
+                style="height: 24px; font-size: 0.78rem;"
+                @onclick="OnReset" 
+                title="Auditar otro contrato">
+            <i class="bi bi-arrow-clockwise me-1"></i>Nuevo
+        </button>
     </div>
-    <div class="score-badge-circle @GetRiskBadgeClass(Score)">
-        <span class="fs-4">@Score</span>
-        <span style="font-size: 0.65rem;">/ 100</span>
-    </div>
-    <button class="btn btn-outline-secondary btn-sm ms-2" @onclick="OnReset" title="Auditar otro documento">
-        <i class="bi bi-arrow-clockwise me-1"></i>Nuevo
-    </button>
 </div>
 
 @code {
     [Parameter] public int Score { get; set; }
     [Parameter] public EventCallback OnReset { get; set; }
 
+    // -90° (Score 0, apuntando a verde) a +90° (Score 100, apuntando a rojo)
+    // Para Score 85: (85 - 50) * 1.8 = +63° (apuntando con precisión al arco rojo)
+    private int RotateAngle => (int)Math.Round((Math.Clamp(Score, 0, 100) - 50) * 1.8);
+
     private static string GetRiskLabel(int score)
     {
-        if (score < 30) return "Bajo Riesgo / Equilibrado";
-        if (score <= 70) return "Riesgo Moderado / Alertas";
-        return "Riesgo Crítico / Cláusulas Abusivas";
+        if (score < 30) return "Bajo Riesgo";
+        if (score <= 70) return "Riesgo Moderado";
+        return "Riesgo Severo / Crítico";
     }
 
     private static string GetRiskTextColor(int score)
@@ -36,8 +73,8 @@
 
     private static string GetRiskBadgeClass(int score)
     {
-        if (score < 30) return "score-badge-green";
-        if (score <= 70) return "score-badge-yellow";
-        return "score-badge-red";
+        if (score < 30) return "bg-success-subtle text-success border border-success-subtle";
+        if (score <= 70) return "bg-warning-subtle text-warning border border-warning-subtle";
+        return "bg-danger text-white";
     }
 }
