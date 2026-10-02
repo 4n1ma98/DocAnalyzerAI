@@ -1,0 +1,132 @@
+.border-gold-subtle {
+    border-color: rgba(194, 155, 56, 0.25) !important;
+}
+
+.icon-circle-gold {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(194, 155, 56, 0.12);
+    border: 1px solid rgba(194, 155, 56, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.text-title-executive {
+    color: var(--text-primary, #0f172a);
+    font-size: 1.05rem;
+}
+
+[data-bs-theme="dark"] .text-title-executive {
+    color: #f8fafc;
+}
+
+.btn-outline-gold {
+    border: 1.5px solid #c29b38;
+    color: #c29b38;
+    background-color: transparent;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    transition: all 0.2s ease;
+}
+
+.btn-outline-gold:hover:not(:disabled) {
+    background-color: #c29b38;
+    color: #0a0f1d;
+    box-shadow: 0 4px 12px rgba(194, 155, 56, 0.25);
+}
+
+.badge-evaluated-annex {
+    background-color: var(--card-surface, #ffffff);
+    color: var(--text-primary, #0f172a);
+    border: 1px solid var(--border-subtle, #cbd5e1);
+    font-size: 0.78rem;
+    padding: 0.3rem 0.65rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+[data-bs-theme="dark"] .badge-evaluated-annex {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.annex-impact-callout {
+    background: linear-gradient(135deg, rgba(194, 155, 56, 0.08) 0%, rgba(194, 155, 56, 0.03) 100%);
+    border: 1.5px solid rgba(194, 155, 56, 0.25);
+    border-left: 4px solid #c29b38;
+    border-radius: 8px;
+    padding: 0.85rem 1.15rem;
+}
+
+.text-secondary-custom {
+    color: var(--text-secondary, #334155);
+    line-height: 1.5;
+}
+
+[data-bs-theme="dark"] .text-secondary-custom {
+    color: #cbd5e1;
+}
+
+/* Panel de anexo pendiente */
+.pending-annex-card {
+    background-color: var(--bg-page, #f8fafc);
+    border: 1.5px dashed #c29b38;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+[data-bs-theme="dark"] .pending-annex-card {
+    background-color: #131d35;
+    border-color: #c29b38;
+}
+
+.pending-annex-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background-color: var(--card-surface, #ffffff);
+    border: 1px solid var(--border-subtle, #cbd5e1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+[data-bs-theme="dark"] .pending-annex-icon {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+
+.badge-pending-tag {
+    background-color: rgba(194, 155, 56, 0.15);
+    color: #c29b38;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+}
+
+.btn-gold-action {
+    background: linear-gradient(135deg, #c29b38 0%, #a17f2a 100%);
+    color: #0a0f1d;
+    border: 1px solid #c29b38;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(194, 155, 56, 0.35);
+    transition: all 0.2s ease;
+}
+
+.btn-gold-action:hover:not(:disabled) {
+    background: linear-gradient(135deg, #d4ab44 0%, #b3892b 100%);
+    box-shadow: 0 6px 16px rgba(194, 155, 56, 0.45);
+    color: #000000;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
