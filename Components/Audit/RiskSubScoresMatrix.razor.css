@@ -1,0 +1,87 @@
+.badge-gold-subtle {
+    background-color: rgba(194, 155, 56, 0.12);
+    color: #c29b38;
+    border: 1px solid rgba(194, 155, 56, 0.25);
+    font-size: 0.8rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.subscore-card {
+    background-color: var(--bg-page, #f8fafc);
+    border: 1px solid var(--border-subtle, #cbd5e1);
+    border-radius: 12px;
+    padding: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease;
+}
+
+[data-bs-theme="dark"] .subscore-card {
+    background-color: #111a30;
+    border-color: #24324f;
+}
+
+.subscore-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    border-color: rgba(194, 155, 56, 0.3);
+}
+
+.dimension-title {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary, #0f172a);
+    letter-spacing: 0.2px;
+    display: flex;
+    align-items: center;
+}
+
+[data-bs-theme="dark"] .dimension-title {
+    color: #e2e8f0;
+}
+
+.weight-tag {
+    background-color: rgba(194, 155, 56, 0.12);
+    color: #c29b38;
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.subscore-number {
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1;
+}
+
+.progress-subscore {
+    height: 6px;
+    border-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+[data-bs-theme="dark"] .progress-subscore {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.progress-bar {
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.subscore-rationale {
+    font-size: 0.78rem;
+    color: var(--text-secondary, #475569);
+    line-height: 1.4;
+    margin-top: 0.25rem;
+}
+
+[data-bs-theme="dark"] .subscore-rationale {
+    color: #94a3b8;
+}
