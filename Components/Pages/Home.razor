@@ -104,6 +104,9 @@
             </div>
         </div>
 
+        <!-- Matriz de Sub-Puntajes de Riesgo Ponderados -->
+        <RiskSubScoresMatrix SubScores="@AnalysisData.SubScores" GlobalScore="@AnalysisData.RiskScore" />
+
         <!-- Sección de Incorporación de Otro Sí / Anexos Posteriores -->
         <AnnexUploadSection AnalysisData="@AnalysisData"
                             CurrentAnnexes="@AuditConfig.Annexes"
