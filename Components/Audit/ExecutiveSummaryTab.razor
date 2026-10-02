@@ -1,38 +1,14 @@
 @namespace DocAnalyzerAI.Components.Audit
 
-<div class="card border-0 shadow-sm rounded-4 p-4">
-    <h4 class="fw-bold mb-3 d-flex align-items-center gap-2">
-        <i class="bi bi-file-earmark-text text-primary"></i> Resumen Ejecutivo del Documento
+<div class="card card-executive p-4">
+    <h4 class="heading-serif fw-bold mb-3 d-flex align-items-center gap-2">
+        <i class="bi bi-file-earmark-text text-warning"></i> Resumen Ejecutivo del Documento
     </h4>
-    <div class="text-secondary lh-lg fs-6" style="white-space: pre-line;">
+    <div class="lh-lg fs-6" style="white-space: pre-line; color: var(--text-secondary);">
         @Summary
-    </div>
-
-    <div class="row g-3 mt-4 pt-3 border-top">
-        <div class="col-md-4">
-            <div class="p-3 bg-light rounded-3 text-center">
-                <div class="fs-4 fw-bold text-success">@StrengthsCount</div>
-                <div class="small text-muted">Cláusulas Favorables</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="p-3 bg-light rounded-3 text-center">
-                <div class="fs-4 fw-bold text-warning">@WeaknessesCount</div>
-                <div class="small text-muted">Ambigüedades / Desventajas</div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="p-3 bg-light rounded-3 text-center">
-                <div class="fs-4 fw-bold text-danger">@RedFlagsCount</div>
-                <div class="small text-muted">Riesgos Críticos (Red Flags)</div>
-            </div>
-        </div>
     </div>
 </div>
 
 @code {
     [Parameter] public string Summary { get; set; } = string.Empty;
-    [Parameter] public int StrengthsCount { get; set; }
-    [Parameter] public int WeaknessesCount { get; set; }
-    [Parameter] public int RedFlagsCount { get; set; }
 }

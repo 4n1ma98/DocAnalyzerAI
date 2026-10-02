@@ -24,6 +24,8 @@ public class CounterProposal
 
 public class AnalysisResult
 {
+    public string DetectedContractType { get; set; } = string.Empty;
+    public string ApplicableJurisdiction { get; set; } = string.Empty;
     public string DocumentSummary { get; set; } = string.Empty;
     public int RiskScore { get; set; }
     public List<PointItem> Strengths { get; set; } = [];
