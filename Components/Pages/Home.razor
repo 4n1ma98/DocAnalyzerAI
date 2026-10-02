@@ -10,12 +10,12 @@
     <div class="doc-header-card p-4 p-md-5 mb-4">
         <div class="row align-items-center">
             <div class="col-lg-8">
-                <span class="badge bg-light text-primary fw-semibold mb-2 px-3 py-1">
-                    <i class="bi bi-robot me-1"></i> Inteligencia Legal Asistida
+                <span class="badge badge-gold px-3 py-1 mb-2">
+                    <i class="bi bi-bank2 me-1"></i> DICTAMEN JURÍDICO ASISTIDO
                 </span>
-                <h1 class="display-6 fw-bold mb-2">Auditoría Crítica de Contratos &amp; Acuerdos</h1>
+                <h1 class="display-6 heading-serif fw-bold mb-2">Auditoría Crítica de Contratos &amp; Acuerdos</h1>
                 <p class="lead mb-0 text-white-50">
-                    Sube cualquier contrato en formato <strong>PDF</strong> o <strong>Word (.docx)</strong>. Nuestro motor impulsado por Google Gemini extraerá cláusulas críticas, detectará asimetrías y generará contrapropuestas de negociación inmediatas.
+                    Sube cualquier contrato en formato <strong>PDF</strong> o <strong>Word (.docx)</strong>. Nuestro motor impulsado por Google Gemini extraerá cláusulas críticas, detectará asimetrías y generará contrapropuestas de negociación bajo jurisprudencia vigente.
                 </p>
             </div>
             <div class="col-lg-4 text-center text-lg-end mt-4 mt-lg-0">
@@ -40,16 +40,26 @@
         </div>
     }
 
+    <!-- Barra de Configuración de Jurisdicción y Perspectiva -->
+    <div class="row justify-content-center @(AnalysisData != null || IsProcessing ? "d-none" : "")">
+        <div class="col-xl-9">
+            <AuditConfigurationBar Options="@AuditConfig"
+                                   OptionsChanged="OnAuditConfigChanged"
+                                   IsDisabled="@IsProcessing" />
+        </div>
+    </div>
+
     <!-- Panel de Carga / Input Modular (Permanece en el DOM para streaming de archivo pero se oculta con CSS) -->
     <div class="row justify-content-center @(AnalysisData != null || IsProcessing ? "d-none" : "")">
         <div class="col-xl-9">
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <DocumentDropZone SelectedFile="@SelectedFile"
-                                  OnFileSelected="HandleFileSelected"
-                                  OnClearFile="ClearSelectedFile"
-                                  OnStartAudit="StartAuditAsync"
-                                  IsProcessing="@IsProcessing" />
-            </div>
+            <DocumentDropZone SelectedFile="@SelectedFile"
+                              Annexes="@AuditConfig.Annexes"
+                              OnFileSelected="HandleFileSelected"
+                              OnAnnexSelected="HandlePreAuditAnnexSelected"
+                              OnRemoveAnnex="HandleRemoveAnnex"
+                              OnClearFile="ClearSelectedFile"
+                              OnStartAudit="StartAuditAsync"
+                              IsProcessing="@IsProcessing" />
         </div>
     </div>
 
@@ -65,13 +75,27 @@
     @if (AnalysisData != null && !IsProcessing)
     {
         <!-- Header del Reporte -->
-        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <div class="card card-executive p-4 mb-4">
             <div class="row align-items-center">
-                <div class="col-md-8">
-                    <div class="d-flex align-items-center gap-2 text-muted small mb-1">
-                        <i class="bi bi-check-circle-fill text-success"></i> Documento auditado con éxito
+                <div class="col-lg-8 col-md-7">
+                    <div class="d-flex flex-wrap align-items-center gap-2 small mb-2">
+                        <span class="badge badge-gold px-2 py-1">
+                            <i class="bi bi-briefcase-fill me-1"></i> @AnalysisData.DetectedContractType
+                        </span>
+                        <span class="badge bg-secondary-subtle text-secondary px-2 py-1">
+                            <i class="bi bi-geo-alt-fill me-1"></i> @AnalysisData.ApplicableJurisdiction
+                        </span>
+                        <span class="badge bg-primary-subtle text-primary px-2 py-1">
+                            <i class="bi bi-person-bounding-box me-1"></i> @(AuditConfig.Perspective == AuditPerspective.Worker ? "Defensa: Trabajador" : "Blindaje: Empresa")
+                        </span>
+                        @if (AnalysisData.AnalyzedAnnexes.Count > 0)
+                        {
+                            <span class="badge bg-warning-subtle text-warning-emphasis px-2 py-1 border border-warning-subtle">
+                                <i class="bi bi-paperclip me-1"></i> +@AnalysisData.AnalyzedAnnexes.Count Otro Sí / Anexo(s)
+                            </span>
+                        }
                     </div>
-                    <h2 class="h3 fw-bold mb-1 text-dark">@AuditFileName</h2>
+                    <h2 class="h3 heading-serif fw-bold mb-1">@AuditFileName</h2>
                     <p class="text-muted mb-0 small">
                         Analizado por Google Gemini &bull; Clasificación de cláusulas y semáforo de riesgo contractual
                     </p>
@@ -79,6 +103,18 @@
                 <RiskScoreGauge Score="@AnalysisData.RiskScore" OnReset="ResetAnalysis" />
             </div>
         </div>
+
+        <!-- Matriz de Sub-Puntajes de Riesgo Ponderados -->
+        <RiskSubScoresMatrix SubScores="@AnalysisData.SubScores" GlobalScore="@AnalysisData.RiskScore" />
+
+        <!-- Sección de Incorporación de Otro Sí / Anexos Posteriores -->
+        <AnnexUploadSection AnalysisData="@AnalysisData"
+                            CurrentAnnexes="@AuditConfig.Annexes"
+                            PendingAnnexFile="@PendingPostAuditAnnexFile"
+                            OnPostAuditAnnexSelected="HandlePostAuditAnnexSelected"
+                            OnAuditAnnexImpact="AuditPostAuditAnnexImpactAsync"
+                            OnDiscardPendingAnnex="DiscardPendingPostAuditAnnex"
+                            IsProcessing="@IsProcessing" />
 
         <!-- Navegación por Tabs -->
         <ul class="nav nav-pills nav-pills-custom mb-4 gap-2 border-bottom pb-3">
@@ -117,10 +153,7 @@
         <div class="tab-content">
             @if (ActiveTab == "summary")
             {
-                <ExecutiveSummaryTab Summary="@AnalysisData.DocumentSummary"
-                                     StrengthsCount="@AnalysisData.Strengths.Count"
-                                     WeaknessesCount="@AnalysisData.Weaknesses.Count"
-                                     RedFlagsCount="@AnalysisData.RedFlags.Count" />
+                <ExecutiveSummaryTab Summary="@AnalysisData.DocumentSummary" />
             }
             @if (ActiveTab == "strengths")
             {
@@ -144,6 +177,8 @@
 
 @code {
     private IBrowserFile? SelectedFile;
+    private string? OriginalContractText;
+    private IBrowserFile? PendingPostAuditAnnexFile;
     private string? ErrorMessage;
     private bool IsProcessing;
     private string ProcessingStatusMessage = string.Empty;
@@ -153,6 +188,13 @@
     private AnalysisResult? AnalysisData;
     private string? AuditFileName;
     private string ActiveTab = "summary";
+
+    private AuditOptions AuditConfig = new();
+
+    private void OnAuditConfigChanged(AuditOptions options)
+    {
+        AuditConfig = options;
+    }
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -164,29 +206,154 @@
         }
     }
 
+    private async Task HandlePreAuditAnnexSelected(InputFileChangeEventArgs e)
+    {
+        ErrorMessage = null;
+        var file = e.File;
+        if (file == null) return;
+
+        try
+        {
+            ValidateFileFormat(file);
+            var annexText = await DocumentReader.ExtractTextAsync(file);
+            AuditConfig.Annexes.Add(new ContractAnnexItem
+            {
+                FileName = file.Name,
+                Size = file.Size,
+                Text = annexText
+            });
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al adjuntar anexo: {ex.Message}";
+        }
+    }
+
+    private void HandleRemoveAnnex(ContractAnnexItem annex)
+    {
+        AuditConfig.Annexes.Remove(annex);
+    }
+
+    private void HandlePostAuditAnnexSelected(InputFileChangeEventArgs e)
+    {
+        ErrorMessage = null;
+        var file = e.File;
+        if (file != null)
+        {
+            try
+            {
+                ValidateFileFormat(file);
+                PendingPostAuditAnnexFile = file;
+            }
+            catch (Exception ex)
+            {
+                ErrorMessage = ex.Message;
+                PendingPostAuditAnnexFile = null;
+            }
+        }
+    }
+
+    private void DiscardPendingPostAuditAnnex()
+    {
+        PendingPostAuditAnnexFile = null;
+    }
+
+    private async Task AuditPostAuditAnnexImpactAsync()
+    {
+        if (PendingPostAuditAnnexFile == null || string.IsNullOrWhiteSpace(OriginalContractText)) return;
+
+        using var timerCts = new CancellationTokenSource();
+        try
+        {
+            IsProcessing = true;
+            ErrorMessage = null;
+            ElapsedSeconds = 0;
+            ProcessingProgress = 15;
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    while (!timerCts.Token.IsCancellationRequested)
+                    {
+                        await Task.Delay(1000, timerCts.Token);
+                        ElapsedSeconds++;
+                        if (ProcessingProgress < 90)
+                        {
+                            ProcessingProgress = Math.Min(90, ProcessingProgress + 5);
+                        }
+                        await InvokeAsync(StateHasChanged);
+                    }
+                }
+                catch (OperationCanceledException) { }
+            }, timerCts.Token);
+
+            ProcessingStatusMessage = $"Extrayendo contenido de '{PendingPostAuditAnnexFile.Name}'...";
+            ProcessingProgress = 30;
+            StateHasChanged();
+
+            var newAnnexText = await DocumentReader.ExtractTextAsync(PendingPostAuditAnnexFile);
+            AuditConfig.Annexes.Add(new ContractAnnexItem
+            {
+                FileName = PendingPostAuditAnnexFile.Name,
+                Size = PendingPostAuditAnnexFile.Size,
+                Text = newAnnexText
+            });
+
+            var selectedCountry = AuditConfig.GetSelectedCountry();
+            ProcessingStatusMessage = $"Contrastando '{PendingPostAuditAnnexFile.Name}' contra contrato principal ({selectedCountry.Name})...";
+            ProcessingProgress = 55;
+            StateHasChanged();
+
+            var updatedResult = await GeminiService.AuditDocumentAsync(OriginalContractText, AuditConfig);
+
+            timerCts.Cancel();
+            ProcessingStatusMessage = "Actualizando dictamen legal y semáforo de riesgo...";
+            ProcessingProgress = 100;
+            StateHasChanged();
+
+            await Task.Delay(400);
+            AnalysisData = updatedResult;
+            PendingPostAuditAnnexFile = null;
+            ActiveTab = "summary";
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"Error al auditar el Otro Sí: {ex.Message}";
+        }
+        finally
+        {
+            timerCts.Cancel();
+            IsProcessing = false;
+            StateHasChanged();
+        }
+    }
+
     private void ValidateAndSetFile(IBrowserFile file)
+    {
+        ValidateFileFormat(file);
+        SelectedFile = file;
+    }
+
+    private static void ValidateFileFormat(IBrowserFile file)
     {
         var ext = Path.GetExtension(file.Name).ToLowerInvariant();
         if (ext != ".pdf" && ext != ".docx")
         {
-            ErrorMessage = "Solo se permiten documentos en formato PDF (.pdf) o Word (.docx).";
-            SelectedFile = null;
-            return;
+            throw new InvalidOperationException("Solo se permiten documentos en formato PDF (.pdf) o Word (.docx).");
         }
 
         if (file.Size > DocumentReaderService.MaxFileSizeInBytes)
         {
-            ErrorMessage = "El archivo excede el tamaño máximo permitido de 15 MB.";
-            SelectedFile = null;
-            return;
+            throw new InvalidOperationException("El archivo excede el tamaño máximo permitido de 15 MB.");
         }
-
-        SelectedFile = file;
     }
 
     private void ClearSelectedFile()
     {
         SelectedFile = null;
+        OriginalContractText = null;
+        AuditConfig.Annexes.Clear();
         ErrorMessage = null;
     }
 
@@ -221,17 +388,20 @@
                 catch (OperationCanceledException) { }
             }, timerCts.Token);
 
-            ProcessingStatusMessage = "Extrayendo y sanitizando el texto del documento...";
+            ProcessingStatusMessage = "Extrayendo y sanitizando el texto del documento principal...";
             ProcessingProgress = 25;
             StateHasChanged();
 
-            var documentText = await DocumentReader.ExtractTextAsync(SelectedFile);
+            OriginalContractText = await DocumentReader.ExtractTextAsync(SelectedFile);
 
-            ProcessingStatusMessage = "Auditoría legal con Google Gemini...";
+            var selectedCountry = AuditConfig.GetSelectedCountry();
+            var perspectiveName = AuditConfig.Perspective == AuditPerspective.Worker ? "Trabajador" : "Empresa";
+            var annexNote = AuditConfig.Annexes.Count > 0 ? $" con {AuditConfig.Annexes.Count} Otro Sí" : "";
+            ProcessingStatusMessage = $"Auditoría legal con Google Gemini ({selectedCountry.Name} - {perspectiveName}{annexNote})...";
             ProcessingProgress = Math.Max(ProcessingProgress, 45);
             StateHasChanged();
 
-            var result = await GeminiService.AuditDocumentAsync(documentText);
+            var result = await GeminiService.AuditDocumentAsync(OriginalContractText, AuditConfig);
 
             timerCts.Cancel();
             ProcessingStatusMessage = "Consolidando métricas, alertas y contrapropuestas...";
@@ -258,6 +428,9 @@
     {
         AnalysisData = null;
         SelectedFile = null;
+        OriginalContractText = null;
+        AuditConfig.Annexes.Clear();
+        PendingPostAuditAnnexFile = null;
         ErrorMessage = null;
         ActiveTab = "summary";
         ElapsedSeconds = 0;

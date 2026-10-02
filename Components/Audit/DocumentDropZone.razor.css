@@ -1,0 +1,358 @@
+/* Drag and Drop Zone */
+.dropzone-container {
+    border: 2px dashed var(--border-subtle, #cbd5e1);
+    border-radius: 1rem;
+    background-color: var(--card-surface, #ffffff);
+    padding: 3.5rem 1.5rem;
+    text-align: center;
+    transition: all 0.25s ease-in-out;
+    cursor: pointer;
+    position: relative;
+}
+
+[data-bs-theme="dark"] .dropzone-container {
+    background-color: #0f172a;
+    border-color: #334155;
+}
+
+.dropzone-container:hover, .dropzone-container.drag-active {
+    border-color: #c29b38;
+    background-color: rgba(194, 155, 56, 0.05);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(194, 155, 56, 0.12);
+}
+
+.dropzone-icon {
+    font-size: 3.5rem;
+    color: #c29b38;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+
+.btn-browse {
+    border: 1.5px solid #c29b38;
+    color: #c29b38;
+    background: transparent;
+    transition: all 0.2s ease;
+}
+
+.btn-browse:hover {
+    background: #c29b38;
+    color: #0a0f1d;
+    box-shadow: 0 4px 12px rgba(194, 155, 56, 0.25);
+}
+
+/* Panel de Archivo Seleccionado - Executive Luxury Bar */
+.selected-file-panel {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.95) 100%);
+    border: 1.5px solid var(--border-subtle, #cbd5e1);
+    border-radius: 16px;
+    padding: 1.25rem 1.75rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: all 0.25s ease;
+}
+
+[data-bs-theme="dark"] .selected-file-panel {
+    background: linear-gradient(135deg, #10192e 0%, #0d1527 100%);
+    border-color: #24324f;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+}
+
+/* Grupo de Información Izquierdo */
+.file-info-group {
+    display: flex;
+    align-items: center;
+    gap: 1.15rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.badge-contract-tag {
+    background-color: rgba(194, 155, 56, 0.12);
+    color: #c29b38;
+    border: 1px solid rgba(194, 155, 56, 0.25);
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Badges de Formato de Archivo */
+.file-badge {
+    width: 54px;
+    height: 54px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.06);
+    font-size: 1.85rem;
+    line-height: 1;
+}
+
+/* PDF: Fondo suave rosado/rubí con icono carmesí */
+.file-badge.pdf-badge {
+    background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%);
+    border: 1.5px solid #fecdd3;
+    color: #e11d48;
+}
+
+[data-bs-theme="dark"] .file-badge.pdf-badge {
+    background: linear-gradient(135deg, rgba(225, 29, 72, 0.18) 0%, rgba(225, 29, 72, 0.08) 100%);
+    border-color: rgba(225, 29, 72, 0.35);
+    color: #fb7185;
+}
+
+/* Word: Fondo suave zafiro con icono azul */
+.file-badge.word-badge {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border: 1.5px solid #bfdbfe;
+    color: #2563eb;
+}
+
+[data-bs-theme="dark"] .file-badge.word-badge {
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.18) 0%, rgba(37, 99, 235, 0.08) 100%);
+    border-color: rgba(37, 99, 235, 0.35);
+    color: #60a5fa;
+}
+
+.file-text-meta {
+    flex: 1;
+    min-width: 0;
+}
+
+.file-name-heading {
+    color: var(--text-primary, #0f172a);
+    font-size: 1.05rem;
+    letter-spacing: -0.2px;
+    margin-bottom: 0.35rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+[data-bs-theme="dark"] .file-name-heading {
+    color: #f8fafc;
+}
+
+.file-pills-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Píldoras de Metadatos */
+.file-meta-badge {
+    background-color: var(--card-surface, #ffffff);
+    color: var(--text-secondary, #475569);
+    border: 1px solid var(--border-subtle, #cbd5e1);
+    font-size: 0.76rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+[data-bs-theme="dark"] .file-meta-badge {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+
+.file-format-badge {
+    background-color: rgba(194, 155, 56, 0.1);
+    color: #c29b38;
+    border: 1px solid rgba(194, 155, 56, 0.25);
+    font-size: 0.76rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 6px;
+    font-weight: 700;
+}
+
+[data-bs-theme="dark"] .file-format-badge {
+    background-color: rgba(194, 155, 56, 0.15);
+    color: #eab308;
+}
+
+.file-status-badge {
+    background-color: rgba(16, 185, 129, 0.12);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    font-size: 0.76rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+[data-bs-theme="dark"] .file-status-badge {
+    background-color: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.35);
+    color: #34d399;
+}
+
+/* Grupo de Acciones Derecho */
+.file-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.btn-attach-annex {
+    background-color: rgba(194, 155, 56, 0.08);
+    border: 1.5px dashed rgba(194, 155, 56, 0.4);
+    color: #c29b38;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    padding: 0.5rem 0.85rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.btn-attach-annex:hover:not(:disabled) {
+    background-color: rgba(194, 155, 56, 0.16);
+    border-color: #c29b38;
+    color: #c29b38;
+}
+
+[data-bs-theme="dark"] .btn-attach-annex {
+    background-color: rgba(194, 155, 56, 0.12);
+    border-color: rgba(194, 155, 56, 0.35);
+    color: #eab308;
+}
+
+.btn-change-doc {
+    background-color: var(--card-surface, #ffffff);
+    border: 1.5px solid var(--border-subtle, #cbd5e1);
+    color: var(--text-secondary, #475569);
+    border-radius: 10px;
+    font-size: 0.88rem;
+    padding: 0.5rem 0.85rem;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.btn-change-doc:hover:not(:disabled) {
+    border-color: #c29b38;
+    color: #c29b38;
+    background-color: rgba(194, 155, 56, 0.05);
+}
+
+[data-bs-theme="dark"] .btn-change-doc {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #cbd5e1;
+}
+
+[data-bs-theme="dark"] .btn-change-doc:hover:not(:disabled) {
+    border-color: #c29b38;
+    color: #c29b38;
+    background-color: rgba(194, 155, 56, 0.1);
+}
+
+.btn-gold-action {
+    background: linear-gradient(135deg, #c29b38 0%, #a17f2a 100%);
+    color: #0a0f1d;
+    border: 1px solid #c29b38;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    padding: 0.5rem 1.25rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(194, 155, 56, 0.35);
+    transition: all 0.25s ease;
+}
+
+.btn-gold-action:hover:not(:disabled) {
+    background: linear-gradient(135deg, #d4ab44 0%, #b3892b 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(194, 155, 56, 0.45);
+    color: #000000;
+}
+
+/* Bandeja de Anexos Vinculados */
+.annexes-tray {
+    border-color: var(--border-subtle, #cbd5e1) !important;
+}
+
+[data-bs-theme="dark"] .annexes-tray {
+    border-color: #1e293b !important;
+}
+
+.annex-tray-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary, #475569);
+    letter-spacing: 0.3px;
+}
+
+[data-bs-theme="dark"] .annex-tray-title {
+    color: #94a3b8;
+}
+
+.annex-pill-item {
+    background-color: var(--card-surface, #ffffff);
+    border: 1px solid var(--border-subtle, #cbd5e1);
+    border-radius: 8px;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s ease;
+}
+
+[data-bs-theme="dark"] .annex-pill-item {
+    background-color: #1e293b;
+    border-color: #334155;
+    color: #f1f5f9;
+}
+
+.annex-pill-name {
+    font-weight: 600;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.annex-pill-size {
+    color: var(--text-muted, #64748b);
+    font-size: 0.74rem;
+    margin-left: 4px;
+}
+
+.annex-remove-btn {
+    border: none;
+    background: transparent;
+    padding: 0;
+    color: #ef4444;
+    font-size: 0.85rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.annex-remove-btn:hover:not(:disabled) {
+    transform: scale(1.15);
+    color: #dc2626;
+}
+
+/* Responsividad para pantallas móviles */
+@media (max-width: 767.98px) {
+    .selected-file-panel {
+        padding: 1.25rem;
+    }
+
+    .file-actions-group {
+        justify-content: flex-end;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+}

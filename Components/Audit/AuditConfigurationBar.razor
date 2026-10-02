@@ -1,0 +1,140 @@
+@namespace DocAnalyzerAI.Components.Audit
+@using DocAnalyzerAI.Models
+
+<div class="config-panel p-4 mb-4">
+    <div class="row g-4 align-items-stretch">
+        <!-- Columna 1: Jurisdicción Legal -->
+        <div class="col-lg-6 col-md-12">
+            <div class="config-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <label class="config-card-title mb-0">
+                        <i class="bi bi-globe-americas text-warning me-2 fs-5"></i>
+                        <span>JURISDICCIÓN LEGAL</span>
+                    </label>
+                    <span class="badge badge-gold-subtle">
+                        <i class="bi bi-calendar-check me-1"></i>Vigencia 2026
+                    </span>
+                </div>
+
+                <div class="select-wrapper mb-3">
+                    <select class="form-select config-select" 
+                            value="@Options.CountryCode" 
+                            @onchange="OnCountryChanged"
+                            disabled="@IsDisabled"
+                            aria-label="Seleccionar país y ley laboral">
+                        <option value="CO">🇨🇴 Colombia</option>
+                        <option value="MX">🇲🇽 México</option>
+                        <option value="ES">🇪🇸 España</option>
+                        <option value="US">🇺🇸 Estados Unidos</option>
+                        <option value="CL">🇨🇱 Chile</option>
+                        <option value="AR">🇦🇷 Argentina</option>
+                        <option value="PE">🇵🇪 Perú</option>
+                        <option value="INTL">🌐 Estándar Internacional (OIT)</option>
+                    </select>
+                </div>
+
+                <!-- Marco normativo activo en tarjeta informativa -->
+                <div class="framework-banner">
+                    <i class="bi bi-shield-check text-warning flex-shrink-0 mt-1"></i>
+                    <div class="framework-content">
+                        <span class="framework-label">Marco Normativo Activo:</span>
+                        <span class="framework-text">@Options.GetSelectedCountry().LegalFramework</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna 2: Perspectiva de Análisis con Switch Deslizante Real -->
+        <div class="col-lg-6 col-md-12">
+            <div class="config-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <label class="config-card-title mb-0">
+                        <i class="bi bi-sliders text-warning me-2 fs-5"></i>
+                        <span>PERSPECTIVA DE ANÁLISIS</span>
+                    </label>
+                    <span class="badge @(Options.Perspective == AuditPerspective.Worker ? "badge-worker" : "badge-employer")">
+                        <i class="bi @(Options.Perspective == AuditPerspective.Worker ? "bi-shield-check" : "bi-briefcase") me-1"></i>
+                        @(Options.Perspective == AuditPerspective.Worker ? "Defensa del Trabajador" : "Blindaje Corporativo")
+                    </span>
+                </div>
+
+                <!-- Control de Switch Deslizante con Knob Físico y Botones Laterales -->
+                <div class="perspective-toggle-container mb-3">
+                    <button type="button" 
+                            class="perspective-btn @(Options.Perspective == AuditPerspective.Worker ? "selected-worker" : "")"
+                            @onclick="() => SetPerspective(AuditPerspective.Worker)"
+                            disabled="@IsDisabled">
+                        <i class="bi bi-person-fill me-1"></i>
+                        <span>Trabajador</span>
+                    </button>
+
+                    <div class="switch-slider-track @(Options.Perspective == AuditPerspective.Worker ? "track-left" : "track-right")"
+                         @onclick="TogglePerspective"
+                         role="switch"
+                         aria-checked="@(Options.Perspective == AuditPerspective.Employer)"
+                         tabindex="0"
+                         title="Haz clic para deslizar el interruptor">
+                        <div class="switch-slider-knob">
+                            <i class="bi @(Options.Perspective == AuditPerspective.Worker ? "bi-person-fill" : "bi-building-fill") knob-icon"></i>
+                        </div>
+                    </div>
+
+                    <button type="button" 
+                            class="perspective-btn @(Options.Perspective == AuditPerspective.Employer ? "selected-employer" : "")"
+                            @onclick="() => SetPerspective(AuditPerspective.Employer)"
+                            disabled="@IsDisabled">
+                        <i class="bi bi-building-fill me-1"></i>
+                        <span>Empresa</span>
+                    </button>
+                </div>
+
+                <!-- Descripción orientativa del rol -->
+                <div class="perspective-banner @(Options.Perspective == AuditPerspective.Worker ? "banner-worker" : "banner-employer")">
+                    <i class="bi @(Options.Perspective == AuditPerspective.Worker ? "bi-search" : "bi-shield-shaded") flex-shrink-0 mt-1"></i>
+                    <div class="perspective-content">
+                        @if (Options.Perspective == AuditPerspective.Worker)
+                        {
+                            <span class="perspective-text">
+                                <strong>Enfoque Pro-Trabajador:</strong> Detección de cláusulas abusivas, renuncias de derechos y desbalances en jornada o remuneración.
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="perspective-text">
+                                <strong>Enfoque Pro-Empresa:</strong> Mitigación de riesgos laborales, demandas por contrato realidad y blindaje de propiedad intelectual.
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public AuditOptions Options { get; set; } = new();
+    [Parameter] public EventCallback<AuditOptions> OptionsChanged { get; set; }
+    [Parameter] public bool IsDisabled { get; set; }
+
+    private async Task OnCountryChanged(ChangeEventArgs e)
+    {
+        Options.CountryCode = e.Value?.ToString() ?? "CO";
+        await OptionsChanged.InvokeAsync(Options);
+    }
+
+    private async Task SetPerspective(AuditPerspective perspective)
+    {
+        if (IsDisabled) return;
+        Options.Perspective = perspective;
+        await OptionsChanged.InvokeAsync(Options);
+    }
+
+    private async Task TogglePerspective()
+    {
+        if (IsDisabled) return;
+        Options.Perspective = Options.Perspective == AuditPerspective.Worker 
+            ? AuditPerspective.Employer 
+            : AuditPerspective.Worker;
+        await OptionsChanged.InvokeAsync(Options);
+    }
+}

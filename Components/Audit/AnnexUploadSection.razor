@@ -1,0 +1,122 @@
+@namespace DocAnalyzerAI.Components.Audit
+@using DocAnalyzerAI.Models
+@using Microsoft.AspNetCore.Components.Forms
+
+<!-- InputFile para carga posterior de Otro Sí (se mantiene fijo en el DOM) -->
+<InputFile id="postAuditAnnexInput" 
+           OnChange="OnPostAuditAnnexSelected" 
+           accept=".pdf,.docx" 
+           style="display: none;" />
+
+<div class="card card-executive p-4 mb-4 border-gold-subtle">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+        <div class="d-flex align-items-center gap-2">
+            <div class="icon-circle-gold">
+                <i class="bi bi-file-earmark-diff-fill text-warning fs-5"></i>
+            </div>
+            <div>
+                <h5 class="fw-bold mb-0 text-title-executive">Adendas &amp; "Otro Sí" Modificatorios</h5>
+                <p class="text-muted small mb-0">
+                    Contrasta modificaciones sobrevinientes, prórrogas o anexos contra el contrato principal auditado.
+                </p>
+            </div>
+        </div>
+
+        @if (PendingAnnexFile == null)
+        {
+            <button type="button" 
+                    class="btn btn-outline-gold px-3 py-2 fw-semibold"
+                    onclick="document.getElementById('postAuditAnnexInput').click();"
+                    disabled="@IsProcessing">
+                <i class="bi bi-file-earmark-plus me-2"></i>Incorporar "Otro Sí" posterior
+            </button>
+        }
+    </div>
+
+    <!-- Banner de impacto legal si ya se han auditado anexos -->
+    @if (AnalysisData.AnalyzedAnnexes.Count > 0)
+    {
+        <div class="annexes-evaluated-container mb-3">
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                <span class="small fw-bold text-uppercase tracking-wider text-muted">
+                    <i class="bi bi-check-all text-success me-1"></i>Anexos incorporados a este dictamen:
+                </span>
+                @foreach (var annexName in AnalysisData.AnalyzedAnnexes)
+                {
+                    <span class="badge badge-evaluated-annex">
+                        <i class="bi bi-paperclip me-1 text-warning"></i>@annexName
+                    </span>
+                }
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(AnalysisData.AnnexImpactSummary))
+            {
+                <div class="annex-impact-callout">
+                    <div class="d-flex align-items-start gap-2">
+                        <i class="bi bi-shield-check text-warning fs-5 flex-shrink-0 mt-1"></i>
+                        <div>
+                            <strong class="d-block text-warning small text-uppercase tracking-wider mb-1">
+                                Dictamen de Impacto del "Otro Sí":
+                            </strong>
+                            <p class="mb-0 text-secondary-custom small">
+                                @AnalysisData.AnnexImpactSummary
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <!-- Panel de confirmación si el usuario acaba de seleccionar un nuevo anexo post-análisis -->
+    @if (PendingAnnexFile != null)
+    {
+        <div class="pending-annex-card p-3 rounded-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex align-items-center gap-3">
+                <div class="pending-annex-icon">
+                    <i class="bi @(IsPdf(PendingAnnexFile.Name) ? "bi-file-earmark-pdf-fill text-danger" : "bi-file-earmark-word-fill text-primary") fs-3"></i>
+                </div>
+                <div>
+                    <span class="badge badge-pending-tag mb-1">Nuevo Anexo para Contrastar</span>
+                    <h6 class="fw-bold mb-0">@PendingAnnexFile.Name</h6>
+                    <span class="text-muted small">@FormatFileSize(PendingAnnexFile.Size) &bull; Listo para contrastar contra el contrato principal</span>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <button type="button" 
+                        class="btn btn-outline-secondary px-3 py-2 btn-sm fw-semibold"
+                        @onclick="OnDiscardPendingAnnex"
+                        disabled="@IsProcessing">
+                    <i class="bi bi-x-lg me-1"></i>Descartar
+                </button>
+                <button type="button" 
+                        class="btn btn-gold-action px-3 py-2 btn-sm fw-bold"
+                        @onclick="OnAuditAnnexImpact"
+                        disabled="@IsProcessing">
+                    <i class="bi bi-lightning-charge-fill me-1"></i>Auditar Impacto y Actualizar Dictamen
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public AnalysisResult AnalysisData { get; set; } = default!;
+    [Parameter] public List<ContractAnnexItem> CurrentAnnexes { get; set; } = [];
+    [Parameter] public IBrowserFile? PendingAnnexFile { get; set; }
+    [Parameter] public EventCallback<InputFileChangeEventArgs> OnPostAuditAnnexSelected { get; set; }
+    [Parameter] public EventCallback OnAuditAnnexImpact { get; set; }
+    [Parameter] public EventCallback OnDiscardPendingAnnex { get; set; }
+    [Parameter] public bool IsProcessing { get; set; }
+
+    private static string FormatFileSize(long bytes)
+    {
+        if (bytes >= 1024 * 1024)
+            return $"{bytes / 1024.0 / 1024.0:F2} MB";
+        return $"{bytes / 1024.0:F1} KB";
+    }
+
+    private static bool IsPdf(string fileName) =>
+        Path.GetExtension(fileName).Equals(".pdf", StringComparison.OrdinalIgnoreCase);
+}
