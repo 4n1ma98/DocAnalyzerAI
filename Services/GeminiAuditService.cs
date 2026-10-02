@@ -49,6 +49,27 @@ public class GeminiAuditService : IGeminiAuditService
         .ToList();
         var client = _httpClientFactory.CreateClient(HttpClientName);
 
+        var documentContentBuilder = new StringBuilder();
+        documentContentBuilder.AppendLine("=== DOCUMENTO PRINCIPAL (CONTRATO) ===");
+        documentContentBuilder.AppendLine(documentText);
+
+        if (options.Annexes.Count > 0)
+        {
+            documentContentBuilder.AppendLine();
+            for (int i = 0; i < options.Annexes.Count; i++)
+            {
+                var annex = options.Annexes[i];
+                documentContentBuilder.AppendLine($"=== ANEXO / OTRO SÍ N° {i + 1}: {annex.FileName} ===");
+                documentContentBuilder.AppendLine(annex.Text);
+                documentContentBuilder.AppendLine();
+            }
+        }
+
+        var fullDocumentPayload = documentContentBuilder.ToString();
+        var annexNote = options.Annexes.Count > 0 
+            ? $"IMPORTANTE: Se han adjuntado {options.Annexes.Count} Anexo(s) / 'Otro Sí'. Evalúa de manera prioritaria su impacto jurídico modificatorio respecto al contrato principal. " 
+            : string.Empty;
+
         var systemPrompt = BuildSystemPrompt(options);
         var requestPayload = new
         {
@@ -66,7 +87,7 @@ public class GeminiAuditService : IGeminiAuditService
                     role = "user",
                     parts = new[]
                     {
-                        new { text = $"Por favor audita y analiza críticamente el siguiente documento bajo la jurisdicción de {options.GetSelectedCountry().Name} y la perspectiva indicada. Recuerda responder obligatoriamente 100% en idioma español:\n\n{documentText}" }
+                        new { text = $"Por favor audita y analiza críticamente el siguiente documento bajo la jurisdicción de {options.GetSelectedCountry().Name} y la perspectiva indicada. {annexNote}Recuerda responder obligatoriamente 100% en idioma español:\n\n{fullDocumentPayload}" }
                     }
                 }
             },
@@ -181,6 +202,18 @@ public class GeminiAuditService : IGeminiAuditService
             : "Debes velar prioritariamente por la seguridad jurídica y protección corporativa de la empresa contratante, identificando contingencias legales, riesgos de demandas por 'contrato realidad' o subordinación encubierta, vacíos en protección de secretos comerciales y cesión de propiedad intelectual, ambigüedades en penalidades o entregables, redactando cláusulas sólidas y ejecutables judicialmente sin violar normas de orden público.";
 
         var legalFrameworkSpecifics = GetLegalFrameworkText(options.CountryCode);
+        var annexAuditInstructions = options.Annexes.Count > 0
+            ? """
+
+            AUDITORÍA INTEGRAL DE CONTRATO Y OTRO SÍ / ANEXOS MODIFICATORIOS:
+            El usuario ha proporcionado el Contrato Principal junto con uno o más Anexos o 'Otro Sí' modificatorios.
+            Debes realizar una auditoría armónica e integrada de todo el acuerdo contractual:
+            1. Analiza de manera prioritaria cómo cada 'Otro Sí' o Anexo modifica, deroga, adiciona o altera las cláusulas y condiciones del contrato original (por ejemplo: cambios de remuneración, pactos de exclusividad sobrevinientes, extensión de jornada, teletrabajo, penalidades o prórrogas).
+            2. En el campo "annexImpactSummary", redacta una síntesis ejecutiva clara del impacto legal neto de los anexos (detalla si las adendas empeoran, equilibran o benefician la situación jurídica de la parte evaluada, qué cláusulas originales fueron sustituidas y si se vulneran normas de orden público).
+            3. Incluye los nombres exactos de los anexos evaluados en el array "analyzedAnnexes".
+            4. Refleja en el RiskScore y en todas las pestañas (Puntos Fuertes, Débiles, Red Flags y Sugerencias de Negociación) las nuevas contingencias y cláusulas derivadas de los 'Otro Sí'.
+            """
+            : string.Empty;
 
         return $$"""
             Eres un Abogado Corporativo Senior, Auditor de Contratos de élite y Especialista en Derecho Laboral y Comercial Internacional, con profundo dominio de la normativa vigente en {{country.Name}} actualizada al año 2026.
@@ -188,6 +221,7 @@ public class GeminiAuditService : IGeminiAuditService
             JURISDICCIÓN APLICABLE: {{country.Name}} (Marco normativo: {{country.LegalFramework}}).
             PERSPECTIVA DE AUDITORÍA ASUMIDA: {{perspectiveTitle}}.
             {{perspectiveMission}}
+            {{annexAuditInstructions}}
 
             DETECCIÓN AUTOMÁTICA OBLIGATORIA DEL TIPO DE CONTRATO:
             Debes examinar rigurosamente el texto del documento para identificar y clasificar con precisión técnica su tipología jurídica (por ejemplo: 'Contrato de Trabajo a Término Indefinido', 'Contrato de Trabajo a Término Fijo', 'Contrato de Prestación de Servicios Profesionales por Honorarios', 'Acuerdo de Confidencialidad y No Divulgación (NDA)', 'Contrato de Obra o Labor', 'Contrato de Desarrollo de Software B2B', etc.). Registra el resultado en la propiedad "detectedContractType".
@@ -203,6 +237,8 @@ public class GeminiAuditService : IGeminiAuditService
             {
               "detectedContractType": "Nombre formal del tipo de contrato detectado automáticamente",
               "applicableJurisdiction": "{{country.Name}} - Normativa Laboral / Comercial 2026",
+              "analyzedAnnexes": ["Nombre_del_anexo_1.pdf"], // Lista de nombres de anexos u otro sí evaluados (vacío si no hay)
+              "annexImpactSummary": "Síntesis del impacto legal de los anexos/otro sí sobre el contrato original (o null si no hay anexos)",
               "documentSummary": "Resumen ejecutivo claro y formal del documento en 2 a 3 párrafos explicando su objeto, partes intervinientes, alcance y régimen jurídico aplicable (mencionando si se ajusta o vulnera la normativa aplicable a 2026).",
               "riskScore": 0 a 100, // Número entero. 0-29: Bajo riesgo / equilibrado. 30-69: Riesgo moderado / requiere ajustes. 70-100: Riesgo crítico / altamente desfavorable, leonino o con violaciones al régimen aplicable.
               "strengths": [
@@ -343,6 +379,12 @@ public class GeminiAuditService : IGeminiAuditService
         result.Weaknesses ??= [];
         result.RedFlags ??= [];
         result.NegotiationSuggestions ??= [];
+        result.AnalyzedAnnexes ??= [];
+
+        if (result.AnalyzedAnnexes.Count == 0 && options.Annexes.Count > 0)
+        {
+            result.AnalyzedAnnexes = options.Annexes.Select(a => a.FileName).ToList();
+        }
 
         if (string.IsNullOrWhiteSpace(result.ApplicableJurisdiction))
         {
