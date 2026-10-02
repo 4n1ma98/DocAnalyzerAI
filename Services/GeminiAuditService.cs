@@ -94,6 +94,7 @@ public class GeminiAuditService : IGeminiAuditService
             generationConfig = new
             {
                 response_mime_type = "application/json",
+                response_schema = BuildResponseSchema(),
                 temperature = 0.2
             }
         };
@@ -240,7 +241,17 @@ public class GeminiAuditService : IGeminiAuditService
               "analyzedAnnexes": ["Nombre_del_anexo_1.pdf"], // Lista de nombres de anexos u otro sí evaluados (vacío si no hay)
               "annexImpactSummary": "Síntesis del impacto legal de los anexos/otro sí sobre el contrato original (o null si no hay anexos)",
               "documentSummary": "Resumen ejecutivo claro y formal del documento en 2 a 3 párrafos explicando su objeto, partes intervinientes, alcance y régimen jurídico aplicable (mencionando si se ajusta o vulnera la normativa aplicable a 2026).",
-              "riskScore": 0 a 100, // Número entero. 0-29: Bajo riesgo / equilibrado. 30-69: Riesgo moderado / requiere ajustes. 70-100: Riesgo crítico / altamente desfavorable, leonino o con violaciones al régimen aplicable.
+              "riskScore": 0 a 100, // Número entero. Refleja la severidad global calculada a partir de los 4 sub-puntajes.
+              "subScores": {
+                "economicScore": 0 a 100, // Riesgo Económico y Remuneración (30% ponderación). Deducciones, desalarización, costos asumidos.
+                "economicRationale": "Explicación legal sintética de por qué se asignó este puntaje económico.",
+                "workingHoursScore": 0 a 100, // Riesgo de Jornada y Disponibilidad (25% ponderación). Horas extras, límite 2026, guardias on-call, desconexión.
+                "workingHoursRationale": "Explicación legal sintética de la contingencia en jornada y descanso.",
+                "intellectualPropertyScore": 0 a 100, // Riesgo de PI y No Competencia (25% ponderación). Cesión de inventos fuera de horario, pactos leoninos sin pago.
+                "intellectualPropertyRationale": "Explicación legal sintética de la desproporción en PI o pacto de no competencia.",
+                "stabilityTerminationScore": 0 a 100, // Riesgo de Estabilidad y Terminación (20% ponderación). Causales, descargos, preavisos, contrato realidad.
+                "stabilityTerminationRationale": "Explicación legal sintética sobre causales de despido o contingencias de subordinación."
+              },
               "strengths": [
                 {
                   "title": "Título sintético del punto fuerte",
@@ -396,9 +407,132 @@ public class GeminiAuditService : IGeminiAuditService
             result.DetectedContractType = "Contrato / Acuerdo Detectado";
         }
 
-        result.RiskScore = Math.Clamp(result.RiskScore, 0, 100);
+        result.SubScores ??= new RiskSubScores();
+        result.SubScores.EconomicScore = Math.Clamp(result.SubScores.EconomicScore, 0, 100);
+        result.SubScores.WorkingHoursScore = Math.Clamp(result.SubScores.WorkingHoursScore, 0, 100);
+        result.SubScores.IntellectualPropertyScore = Math.Clamp(result.SubScores.IntellectualPropertyScore, 0, 100);
+        result.SubScores.StabilityTerminationScore = Math.Clamp(result.SubScores.StabilityTerminationScore, 0, 100);
+
+        // Sincronizar el score global con la ponderación exacta calculada
+        var weightedGlobalScore = result.SubScores.CalculateWeightedGlobalScore();
+        result.RiskScore = weightedGlobalScore > 0 ? weightedGlobalScore : Math.Clamp(result.RiskScore, 0, 100);
 
         return result;
+    }
+
+    private static object BuildResponseSchema()
+    {
+        return new
+        {
+            type = "OBJECT",
+            properties = new
+            {
+                detectedContractType = new { type = "STRING" },
+                applicableJurisdiction = new { type = "STRING" },
+                documentSummary = new { type = "STRING" },
+                riskScore = new { type = "INTEGER" },
+                subScores = new
+                {
+                    type = "OBJECT",
+                    properties = new
+                    {
+                        economicScore = new { type = "INTEGER" },
+                        economicRationale = new { type = "STRING" },
+                        workingHoursScore = new { type = "INTEGER" },
+                        workingHoursRationale = new { type = "STRING" },
+                        intellectualPropertyScore = new { type = "INTEGER" },
+                        intellectualPropertyRationale = new { type = "STRING" },
+                        stabilityTerminationScore = new { type = "INTEGER" },
+                        stabilityTerminationRationale = new { type = "STRING" }
+                    },
+                    required = new[]
+                    {
+                        "economicScore", "economicRationale",
+                        "workingHoursScore", "workingHoursRationale",
+                        "intellectualPropertyScore", "intellectualPropertyRationale",
+                        "stabilityTerminationScore", "stabilityTerminationRationale"
+                    }
+                },
+                analyzedAnnexes = new
+                {
+                    type = "ARRAY",
+                    items = new { type = "STRING" }
+                },
+                annexImpactSummary = new { type = "STRING" },
+                strengths = new
+                {
+                    type = "ARRAY",
+                    items = new
+                    {
+                        type = "OBJECT",
+                        properties = new
+                        {
+                            title = new { type = "STRING" },
+                            description = new { type = "STRING" },
+                            originalClause = new { type = "STRING" }
+                        },
+                        required = new[] { "title", "description", "originalClause" }
+                    }
+                },
+                weaknesses = new
+                {
+                    type = "ARRAY",
+                    items = new
+                    {
+                        type = "OBJECT",
+                        properties = new
+                        {
+                            title = new { type = "STRING" },
+                            potentialImpact = new { type = "STRING" },
+                            originalClause = new { type = "STRING" }
+                        },
+                        required = new[] { "title", "potentialImpact", "originalClause" }
+                    }
+                },
+                redFlags = new
+                {
+                    type = "ARRAY",
+                    items = new
+                    {
+                        type = "OBJECT",
+                        properties = new
+                        {
+                            clause = new { type = "STRING" },
+                            riskLevel = new { type = "STRING" },
+                            dangerExplanation = new { type = "STRING" }
+                        },
+                        required = new[] { "clause", "riskLevel", "dangerExplanation" }
+                    }
+                },
+                negotiationSuggestions = new
+                {
+                    type = "ARRAY",
+                    items = new
+                    {
+                        type = "OBJECT",
+                        properties = new
+                        {
+                            currentClause = new { type = "STRING" },
+                            suggestedAlternative = new { type = "STRING" },
+                            justification = new { type = "STRING" }
+                        },
+                        required = new[] { "currentClause", "suggestedAlternative", "justification" }
+                    }
+                }
+            },
+            required = new[]
+            {
+                "detectedContractType",
+                "applicableJurisdiction",
+                "documentSummary",
+                "riskScore",
+                "subScores",
+                "strengths",
+                "weaknesses",
+                "redFlags",
+                "negotiationSuggestions"
+            }
+        };
     }
 
     private static string CleanJsonText(string text)
