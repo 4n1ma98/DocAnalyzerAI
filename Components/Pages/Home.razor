@@ -10,12 +10,12 @@
     <div class="doc-header-card p-4 p-md-5 mb-4">
         <div class="row align-items-center">
             <div class="col-lg-8">
-                <span class="badge bg-light text-primary fw-semibold mb-2 px-3 py-1">
-                    <i class="bi bi-robot me-1"></i> Inteligencia Legal Asistida
+                <span class="badge badge-gold px-3 py-1 mb-2">
+                    <i class="bi bi-bank2 me-1"></i> DICTAMEN JURÍDICO ASISTIDO
                 </span>
-                <h1 class="display-6 fw-bold mb-2">Auditoría Crítica de Contratos &amp; Acuerdos</h1>
+                <h1 class="display-6 heading-serif fw-bold mb-2">Auditoría Crítica de Contratos &amp; Acuerdos</h1>
                 <p class="lead mb-0 text-white-50">
-                    Sube cualquier contrato en formato <strong>PDF</strong> o <strong>Word (.docx)</strong>. Nuestro motor impulsado por Google Gemini extraerá cláusulas críticas, detectará asimetrías y generará contrapropuestas de negociación inmediatas.
+                    Sube cualquier contrato en formato <strong>PDF</strong> o <strong>Word (.docx)</strong>. Nuestro motor impulsado por Google Gemini extraerá cláusulas críticas, detectará asimetrías y generará contrapropuestas de negociación bajo jurisprudencia vigente.
                 </p>
             </div>
             <div class="col-lg-4 text-center text-lg-end mt-4 mt-lg-0">
@@ -40,16 +40,23 @@
         </div>
     }
 
+    <!-- Barra de Configuración de Jurisdicción y Perspectiva -->
+    <div class="row justify-content-center @(AnalysisData != null || IsProcessing ? "d-none" : "")">
+        <div class="col-xl-9">
+            <AuditConfigurationBar Options="@AuditConfig"
+                                   OptionsChanged="OnAuditConfigChanged"
+                                   IsDisabled="@IsProcessing" />
+        </div>
+    </div>
+
     <!-- Panel de Carga / Input Modular (Permanece en el DOM para streaming de archivo pero se oculta con CSS) -->
     <div class="row justify-content-center @(AnalysisData != null || IsProcessing ? "d-none" : "")">
         <div class="col-xl-9">
-            <div class="card border-0 shadow-sm rounded-4 p-4">
-                <DocumentDropZone SelectedFile="@SelectedFile"
-                                  OnFileSelected="HandleFileSelected"
-                                  OnClearFile="ClearSelectedFile"
-                                  OnStartAudit="StartAuditAsync"
-                                  IsProcessing="@IsProcessing" />
-            </div>
+            <DocumentDropZone SelectedFile="@SelectedFile"
+                              OnFileSelected="HandleFileSelected"
+                              OnClearFile="ClearSelectedFile"
+                              OnStartAudit="StartAuditAsync"
+                              IsProcessing="@IsProcessing" />
         </div>
     </div>
 
@@ -65,13 +72,21 @@
     @if (AnalysisData != null && !IsProcessing)
     {
         <!-- Header del Reporte -->
-        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <div class="card card-executive p-4 mb-4">
             <div class="row align-items-center">
-                <div class="col-md-8">
-                    <div class="d-flex align-items-center gap-2 text-muted small mb-1">
-                        <i class="bi bi-check-circle-fill text-success"></i> Documento auditado con éxito
+                <div class="col-lg-8 col-md-7">
+                    <div class="d-flex flex-wrap align-items-center gap-2 small mb-2">
+                        <span class="badge badge-gold px-2 py-1">
+                            <i class="bi bi-briefcase-fill me-1"></i> @AnalysisData.DetectedContractType
+                        </span>
+                        <span class="badge bg-secondary-subtle text-secondary px-2 py-1">
+                            <i class="bi bi-geo-alt-fill me-1"></i> @AnalysisData.ApplicableJurisdiction
+                        </span>
+                        <span class="badge bg-primary-subtle text-primary px-2 py-1">
+                            <i class="bi bi-person-bounding-box me-1"></i> @(AuditConfig.Perspective == AuditPerspective.Worker ? "Defensa: Trabajador" : "Blindaje: Empresa")
+                        </span>
                     </div>
-                    <h2 class="h3 fw-bold mb-1 text-dark">@AuditFileName</h2>
+                    <h2 class="h3 heading-serif fw-bold mb-1">@AuditFileName</h2>
                     <p class="text-muted mb-0 small">
                         Analizado por Google Gemini &bull; Clasificación de cláusulas y semáforo de riesgo contractual
                     </p>
@@ -117,10 +132,7 @@
         <div class="tab-content">
             @if (ActiveTab == "summary")
             {
-                <ExecutiveSummaryTab Summary="@AnalysisData.DocumentSummary"
-                                     StrengthsCount="@AnalysisData.Strengths.Count"
-                                     WeaknessesCount="@AnalysisData.Weaknesses.Count"
-                                     RedFlagsCount="@AnalysisData.RedFlags.Count" />
+                <ExecutiveSummaryTab Summary="@AnalysisData.DocumentSummary" />
             }
             @if (ActiveTab == "strengths")
             {
@@ -153,6 +165,13 @@
     private AnalysisResult? AnalysisData;
     private string? AuditFileName;
     private string ActiveTab = "summary";
+
+    private AuditOptions AuditConfig = new();
+
+    private void OnAuditConfigChanged(AuditOptions options)
+    {
+        AuditConfig = options;
+    }
 
     private void HandleFileSelected(InputFileChangeEventArgs e)
     {
@@ -227,11 +246,13 @@
 
             var documentText = await DocumentReader.ExtractTextAsync(SelectedFile);
 
-            ProcessingStatusMessage = "Auditoría legal con Google Gemini...";
+            var selectedCountry = AuditConfig.GetSelectedCountry();
+            var perspectiveName = AuditConfig.Perspective == AuditPerspective.Worker ? "Trabajador" : "Empresa";
+            ProcessingStatusMessage = $"Auditoría legal con Google Gemini ({selectedCountry.Name} - {perspectiveName})...";
             ProcessingProgress = Math.Max(ProcessingProgress, 45);
             StateHasChanged();
 
-            var result = await GeminiService.AuditDocumentAsync(documentText);
+            var result = await GeminiService.AuditDocumentAsync(documentText, AuditConfig);
 
             timerCts.Cancel();
             ProcessingStatusMessage = "Consolidando métricas, alertas y contrapropuestas...";

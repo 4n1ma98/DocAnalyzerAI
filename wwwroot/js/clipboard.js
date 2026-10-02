@@ -26,6 +26,44 @@ window.docAnalyzer = {
         }
     },
 
+    toggleTheme: function () {
+        const html = document.documentElement;
+        const current = html.getAttribute('data-bs-theme') || 'light';
+        const target = current === 'dark' ? 'light' : 'dark';
+        html.setAttribute('data-bs-theme', target);
+        localStorage.setItem('docAnalyzerTheme', target);
+
+        const icon = document.getElementById('themeToggleIcon');
+        const text = document.getElementById('themeToggleText');
+        if (icon) {
+            icon.className = target === 'dark' ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars-fill text-secondary';
+        }
+        if (text) {
+            text.innerText = target === 'dark' ? 'Modo Claro' : 'Modo Oscuro';
+        }
+        return target;
+    },
+
+    syncThemeUI: function () {
+        const theme = localStorage.getItem('docAnalyzerTheme') || 'light';
+        document.documentElement.setAttribute('data-bs-theme', theme);
+        const icon = document.getElementById('themeToggleIcon');
+        const text = document.getElementById('themeToggleText');
+        if (icon) {
+            icon.className = theme === 'dark' ? 'bi bi-sun-fill text-warning' : 'bi bi-moon-stars-fill text-secondary';
+        }
+        if (text) {
+            text.innerText = theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro';
+        }
+        return theme;
+    },
+
+    getTheme: function () {
+        return document.documentElement.getAttribute('data-bs-theme') || 
+               localStorage.getItem('docAnalyzerTheme') || 
+               'light';
+    },
+
     initDropZoneById: function (dropzoneId, inputId) {
         var dropzone = document.getElementById(dropzoneId);
         var input = document.getElementById(inputId);
@@ -65,6 +103,13 @@ window.docAnalyzer = {
     }
 };
 
+// Auto-sincronizar el botón de tema al cargar
+document.addEventListener("DOMContentLoaded", function () {
+    if (window.docAnalyzer && window.docAnalyzer.syncThemeUI) {
+        window.docAnalyzer.syncThemeUI();
+    }
+});
+
 // Evita que el navegador abra el archivo PDF/DOCX en una nueva pestaña o ventana al arrastrarlo y soltarlo
 window.addEventListener("dragover", function (e) {
     e.preventDefault();
@@ -73,4 +118,3 @@ window.addEventListener("dragover", function (e) {
 window.addEventListener("drop", function (e) {
     e.preventDefault();
 }, false);
-
