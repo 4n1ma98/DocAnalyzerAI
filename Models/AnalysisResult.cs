@@ -32,4 +32,6 @@ public class AnalysisResult
     public List<PointItem> Weaknesses { get; set; } = [];
     public List<RiskFlag> RedFlags { get; set; } = [];
     public List<CounterProposal> NegotiationSuggestions { get; set; } = [];
+    public List<string> AnalyzedAnnexes { get; set; } = [];
+    public string? AnnexImpactSummary { get; set; }
 }

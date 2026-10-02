@@ -1,9 +1,15 @@
 @namespace DocAnalyzerAI.Components.Audit
+@using DocAnalyzerAI.Models
 @inject IJSRuntime JS
 
-<!-- InputFile SIEMPRE se mantiene en el DOM para que Blazor pueda transmitir el flujo de bytes sin errores -->
+<!-- InputFile principal y secundario SIEMPRE se mantienen en el DOM -->
 <InputFile id="fileUploadInput" 
            OnChange="OnFileSelected" 
+           accept=".pdf,.docx"
+           style="display: none;" />
+
+<InputFile id="preAuditAnnexInput" 
+           OnChange="OnAnnexSelected" 
            accept=".pdf,.docx"
            style="display: none;" />
 
@@ -26,50 +32,106 @@
 else
 {
     <div class="selected-file-panel">
-        <!-- Lado izquierdo: Icono de documento y metadatos -->
-        <div class="file-info-group">
-            <div class="file-badge @(IsPdf(SelectedFile.Name) ? "pdf-badge" : "word-badge")">
-                <i class="bi @(IsPdf(SelectedFile.Name) ? "bi-file-earmark-pdf-fill" : "bi-file-earmark-word-fill")"></i>
-            </div>
-            <div class="file-text-meta">
-                <h5 class="fw-bold mb-1 file-name-heading text-truncate" title="@SelectedFile.Name">
-                    @SelectedFile.Name
-                </h5>
-                <div class="file-pills-row">
-                    <span class="badge file-meta-badge">
-                        <i class="bi bi-hdd-fill me-1 text-muted"></i>@FormatFileSize(SelectedFile.Size)
-                    </span>
-                    <span class="badge file-format-badge">
-                        <i class="bi @(IsPdf(SelectedFile.Name) ? "bi-filetype-pdf" : "bi-filetype-docx") me-1"></i>
-                        @(IsPdf(SelectedFile.Name) ? "PDF" : "DOCX")
-                    </span>
-                    <span class="badge file-status-badge">
-                        <i class="bi bi-check-circle-fill me-1 text-success"></i>Listo para dictamen
-                    </span>
+        <!-- Fila Principal: Documento y Acciones -->
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 w-100">
+            <!-- Lado izquierdo: Icono de documento y metadatos -->
+            <div class="file-info-group">
+                <div class="file-badge @(IsPdf(SelectedFile.Name) ? "pdf-badge" : "word-badge")">
+                    <i class="bi @(IsPdf(SelectedFile.Name) ? "bi-file-earmark-pdf-fill" : "bi-file-earmark-word-fill")"></i>
                 </div>
+                <div class="file-text-meta">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge badge-contract-tag">Contrato Principal</span>
+                    </div>
+                    <h5 class="fw-bold mb-1 file-name-heading text-truncate" title="@SelectedFile.Name">
+                        @SelectedFile.Name
+                    </h5>
+                    <div class="file-pills-row">
+                        <span class="badge file-meta-badge">
+                            <i class="bi bi-hdd-fill me-1 text-muted"></i>@FormatFileSize(SelectedFile.Size)
+                        </span>
+                        <span class="badge file-format-badge">
+                            <i class="bi @(IsPdf(SelectedFile.Name) ? "bi-filetype-pdf" : "bi-filetype-docx") me-1"></i>
+                            @(IsPdf(SelectedFile.Name) ? "PDF" : "DOCX")
+                        </span>
+                        <span class="badge file-status-badge">
+                            <i class="bi bi-check-circle-fill me-1 text-success"></i>Listo para dictamen
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lado derecho: Acciones alineadas a la derecha -->
+            <div class="file-actions-group">
+                <!-- Botón para adjuntar Otro Sí antes de iniciar -->
+                <button type="button"
+                        class="btn btn-attach-annex px-3 py-2 fw-semibold" 
+                        onclick="document.getElementById('preAuditAnnexInput').click();"
+                        disabled="@IsProcessing"
+                        title="Vincular un anexo u 'Otro Sí' para auditarlo en conjunto">
+                    <i class="bi bi-paperclip me-1 text-warning"></i>+ Otro Sí / Anexo
+                </button>
+
+                <button type="button"
+                        class="btn btn-change-doc px-3 py-2 fw-semibold" 
+                        @onclick="OnClearFile" 
+                        disabled="@IsProcessing"
+                        title="Cargar un documento diferente">
+                    <i class="bi bi-arrow-left-right me-1"></i>Cambiar
+                </button>
+
+                <button type="button"
+                        class="btn btn-gold-action px-4 py-2 fw-bold" 
+                        @onclick="OnStartAudit" 
+                        disabled="@IsProcessing">
+                    <i class="bi bi-shield-check me-2"></i>Iniciar Análisis
+                </button>
             </div>
         </div>
 
-        <!-- Lado derecho: Acciones alineadas a la derecha -->
-        <div class="file-actions-group">
-            <button class="btn btn-change-doc px-3 py-2 fw-semibold" 
-                    @onclick="OnClearFile" 
-                    disabled="@IsProcessing"
-                    title="Cargar un documento diferente">
-                <i class="bi bi-arrow-left-right me-1"></i>Cambiar archivo
-            </button>
-            <button class="btn btn-gold-action px-4 py-2 fw-bold" 
-                    @onclick="OnStartAudit" 
-                    disabled="@IsProcessing">
-                <i class="bi bi-shield-check me-2"></i>Iniciar Análisis
-            </button>
-        </div>
+        <!-- Bandeja de Anexos / 'Otro Sí' vinculados previamente -->
+        @if (Annexes != null && Annexes.Count > 0)
+        {
+            <div class="annexes-tray mt-3 pt-3 border-top w-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="annex-tray-title">
+                        <i class="bi bi-paperclip text-warning me-1"></i> Anexos / "Otro Sí" Vinculados (@Annexes.Count):
+                    </span>
+                    <button type="button" 
+                            class="btn btn-sm btn-link text-warning text-decoration-none p-0 fw-semibold"
+                            onclick="document.getElementById('preAuditAnnexInput').click();"
+                            disabled="@IsProcessing">
+                        <i class="bi bi-plus-circle me-1"></i>Agregar otro
+                    </button>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach (var annex in Annexes)
+                    {
+                        <div class="annex-pill-item" key="@annex.Id">
+                            <i class="bi @(IsPdf(annex.FileName) ? "bi-file-earmark-pdf-fill text-danger" : "bi-file-earmark-word-fill text-primary") me-1"></i>
+                            <span class="annex-pill-name" title="@annex.FileName">@annex.FileName</span>
+                            <span class="annex-pill-size">(@FormatFileSize(annex.Size))</span>
+                            <button type="button" 
+                                    class="annex-remove-btn ms-2" 
+                                    @onclick="() => OnRemoveAnnex.InvokeAsync(annex)" 
+                                    disabled="@IsProcessing"
+                                    title="Quitar este anexo">
+                                <i class="bi bi-x-circle-fill"></i>
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
     </div>
 }
 
 @code {
     [Parameter] public IBrowserFile? SelectedFile { get; set; }
+    [Parameter] public List<ContractAnnexItem> Annexes { get; set; } = [];
     [Parameter] public EventCallback<InputFileChangeEventArgs> OnFileSelected { get; set; }
+    [Parameter] public EventCallback<InputFileChangeEventArgs> OnAnnexSelected { get; set; }
+    [Parameter] public EventCallback<ContractAnnexItem> OnRemoveAnnex { get; set; }
     [Parameter] public EventCallback OnClearFile { get; set; }
     [Parameter] public EventCallback OnStartAudit { get; set; }
     [Parameter] public bool IsProcessing { get; set; }
