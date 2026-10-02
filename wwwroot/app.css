@@ -1,7 +1,21 @@
 :root {
-    --primary-color: #1e3a8a;
-    --primary-hover: #1e40af;
-    --secondary-color: #0f172a;
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    --font-serif: 'Playfair Display', Georgia, serif;
+    
+    --brand-navy: #0f172a;
+    --brand-navy-deep: #0a0f1d;
+    --brand-gold: #c29b38;
+    --brand-gold-hover: #a17f2a;
+    --brand-gold-subtle: rgba(194, 155, 56, 0.12);
+    --brand-gold-border: rgba(194, 155, 56, 0.3);
+
+    --bg-page: #f8fafc;
+    --card-surface: #ffffff;
+    --border-subtle: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+
     --success-bg: #f0fdf4;
     --success-border: #bbf7d0;
     --success-text: #166534;
@@ -13,25 +27,183 @@
     --danger-text: #991b1b;
 }
 
-body {
-    background-color: #f8fafc;
-    color: #1e293b;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+[data-bs-theme="dark"] {
+    --bg-page: #080d1a;
+    --card-surface: #0f172a;
+    --border-subtle: #1e293b;
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+
+    --success-bg: rgba(34, 197, 94, 0.1);
+    --success-border: rgba(34, 197, 94, 0.25);
+    --success-text: #4ade80;
+    --warning-bg: rgba(245, 158, 11, 0.1);
+    --warning-border: rgba(245, 158, 11, 0.25);
+    --warning-text: #fbbf24;
+    --danger-bg: rgba(239, 68, 68, 0.12);
+    --danger-border: rgba(239, 68, 68, 0.3);
+    --danger-text: #f87171;
 }
 
-/* Hero / Header */
+body {
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+[data-bs-theme="dark"] body {
+    background-color: #080d1a !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .card-executive,
+[data-bs-theme="dark"] .card {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+    color: #f8fafc !important;
+}
+
+[data-bs-theme="dark"] .top-row {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+}
+
+[data-bs-theme="dark"] .sidebar {
+    background-color: #060a14 !important;
+}
+
+[data-bs-theme="dark"] .dropzone-container {
+    background-color: #0f172a !important;
+    border-color: #1e293b !important;
+}
+
+[data-bs-theme="dark"] .clause-quote-box {
+    background-color: #0b1322 !important;
+    border-color: #334155 !important;
+    color: #cbd5e1 !important;
+}
+
+[data-bs-theme="dark"] .nav-pills-custom .nav-link:not(.active) {
+    color: #94a3b8;
+}
+
+[data-bs-theme="dark"] .nav-pills-custom .nav-link:hover:not(.active) {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: #f8fafc;
+}
+
+.heading-serif {
+    font-family: var(--font-serif);
+}
+
+h1, h1:focus, h1:focus-visible, .heading-serif:focus, .heading-serif:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Executive Card */
+.card-executive {
+    background-color: var(--card-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 0.85rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+    transition: all 0.2s ease;
+}
+
+/* Hero / Header Executive Card */
 .doc-header-card {
-    background: linear-gradient(135deg, #1e3a8a 0%, #0f172a 100%);
+    background: linear-gradient(135deg, #0b1528 0%, #030712 100%);
     color: #ffffff;
     border-radius: 1rem;
-    box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.2);
+    border: 1px solid rgba(194, 155, 56, 0.25);
+    box-shadow: 0 10px 25px -5px rgba(2, 6, 23, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.doc-header-card::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 300px;
+    height: 100%;
+    background: radial-gradient(circle at 80% 20%, rgba(194, 155, 56, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+/* Badges */
+.badge-gold {
+    background-color: var(--brand-gold-subtle);
+    color: var(--brand-gold);
+    border: 1px solid var(--brand-gold-border);
+}
+/* Perspective Toggle Slider (Smooth Slide Left to Right) */
+.perspective-slider-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    background-color: var(--bg-page);
+    border: 1px solid var(--border-subtle);
+    border-radius: 9999px;
+    padding: 3px;
+    cursor: pointer;
+    user-select: none;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.perspective-slider-pill {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    border-radius: 9999px;
+    background: linear-gradient(135deg, var(--brand-navy) 0%, #1e293b 100%);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+}
+
+[data-bs-theme="dark"] .perspective-slider-pill {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--brand-gold-border);
+}
+
+.perspective-slider-option {
+    position: relative;
+    flex: 1;
+    text-align: center;
+    font-size: 0.84rem;
+    font-weight: 600;
+    padding: 0.45rem 0.75rem;
+    z-index: 2;
+    transition: color 0.25s ease;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.perspective-slider-option.active {
+    color: #ffffff !important;
+}
+
+.perspective-slider-option:not(.active) {
+    color: var(--text-muted);
+}
+
+.perspective-slider-option:not(.active):hover {
+    color: var(--text-primary);
 }
 
 /* Drag and Drop Zone */
 .dropzone-container {
-    border: 2px dashed #cbd5e1;
+    border: 2px dashed var(--border-subtle);
     border-radius: 1rem;
-    background-color: #ffffff;
+    background-color: var(--card-surface);
     padding: 3rem 1.5rem;
     text-align: center;
     transition: all 0.25s ease-in-out;
@@ -40,123 +212,114 @@ body {
 }
 
 .dropzone-container:hover, .dropzone-container.drag-active {
-    border-color: #2563eb;
-    background-color: #eff6ff;
+    border-color: var(--brand-gold);
+    background-color: var(--brand-gold-subtle);
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.1);
+    box-shadow: 0 8px 20px rgba(194, 155, 56, 0.1);
 }
 
 .dropzone-icon {
     font-size: 3.5rem;
-    color: #2563eb;
+    color: var(--brand-gold);
     margin-bottom: 1rem;
     display: inline-block;
 }
 
-/* File selected preview pill */
-.selected-file-badge {
-    background-color: #f1f5f9;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.75rem;
-    padding: 0.75rem 1.25rem;
+/* Tacómetro SVG de Riesgo (Option B Gauge) */
+.gauge-container {
+    position: relative;
+    width: 175px;
+    height: 100px;
+    margin: 0 auto;
 }
 
-/* Risk Score Gauge / Badge */
-.score-badge-circle {
-    width: 84px;
-    height: 84px;
-    border-radius: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.gauge-svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
 }
 
-.score-badge-green {
-    background: linear-gradient(135deg, #22c55e, #16a34a);
-    color: #ffffff;
-}
-
-.score-badge-yellow {
-    background: linear-gradient(135deg, #eab308, #ca8a04);
-    color: #ffffff;
-}
-
-.score-badge-red {
-    background: linear-gradient(135deg, #ef4444, #dc2626);
-    color: #ffffff;
+.gauge-needle {
+    transition: transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: 50px 50px;
 }
 
 /* Feature & Finding Cards */
 .finding-card {
     border-radius: 0.75rem;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--border-subtle);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
-    background: #ffffff;
+    background: var(--card-surface);
+    color: var(--text-primary);
 }
 
 .finding-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
 .strength-card {
-    border-left: 5px solid #22c55e;
+    border-left: 4px solid #22c55e;
 }
 
 .weakness-card {
-    border-left: 5px solid #f59e0b;
+    border-left: 4px solid #f59e0b;
 }
 
 .redflag-card {
-    border-left: 5px solid #ef4444;
+    border-left: 4px solid #ef4444;
 }
 
 .clause-quote-box {
-    background-color: #f8fafc;
-    border-left: 3px solid #94a3b8;
+    background-color: var(--bg-page);
+    border-left: 3px solid var(--border-subtle);
     font-style: italic;
     font-size: 0.92rem;
-    color: #475569;
-    padding: 0.75rem 1rem;
+    color: var(--text-secondary);
+    padding: 0.85rem 1.1rem;
     border-radius: 0 0.5rem 0.5rem 0;
 }
 
 .counter-offer-box {
-    background-color: #f0fdf4;
-    border: 1px solid #bbf7d0;
+    background-color: var(--success-bg);
+    border: 1px solid var(--success-border);
     border-left: 4px solid #16a34a;
     padding: 0.85rem 1rem;
     border-radius: 0.5rem;
-    font-family: Consolas, 'Courier New', monospace;
-    font-size: 0.95rem;
-    color: #14532d;
+    font-size: 0.93rem;
+    color: var(--success-text);
     white-space: pre-wrap;
 }
 
-/* Tab Styling */
+/* Tabs Personalizados */
 .nav-pills-custom .nav-link {
-    color: #475569;
+    color: var(--text-muted);
     font-weight: 600;
-    padding: 0.75rem 1.25rem;
+    padding: 0.7rem 1.2rem;
     border-radius: 0.5rem;
     transition: all 0.2s;
+    border: 1px solid transparent;
 }
 
 .nav-pills-custom .nav-link.active {
-    background-color: #1e3a8a;
+    background-color: var(--brand-navy);
     color: #ffffff;
-    box-shadow: 0 4px 10px rgba(30, 58, 138, 0.25);
+    border-color: var(--brand-gold-border);
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.25);
+}
+
+[data-bs-theme="dark"] .nav-pills-custom .nav-link.active {
+    background-color: #1e293b;
+    border-color: var(--brand-gold);
+    color: #ffffff;
 }
 
 .nav-pills-custom .nav-link:hover:not(.active) {
-    background-color: #e2e8f0;
-    color: #0f172a;
+    background-color: var(--border-subtle);
+    color: var(--text-primary);
 }
 
-/* Copied toast badge */
+/* Badge Copiado */
 .badge-copied {
     background-color: #15803d;
     color: white;
