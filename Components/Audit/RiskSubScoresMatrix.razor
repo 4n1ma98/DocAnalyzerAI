@@ -1,0 +1,198 @@
+@namespace DocAnalyzerAI.Components.Audit
+@using DocAnalyzerAI.Models
+
+<div class="card card-executive p-4 mb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3 pb-2 border-bottom">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-diagram-3-fill text-warning fs-5"></i>
+            <div>
+                <h5 class="fw-bold mb-0">Desglose de Sub-Puntajes de Riesgo Ponderados</h5>
+                <span class="text-muted small">Evaluación multidimensional calculada bajo ponderación legal compuesta (100%)</span>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge badge-gold-subtle">
+                <i class="bi bi-calculator me-1"></i>Score Global Ponderado: <strong>@GlobalScore / 100</strong>
+            </span>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <!-- Dimensión 1: Riesgo Económico (30%) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="subscore-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="dimension-title">
+                        <i class="bi bi-cash-stack text-warning me-1"></i> Económico &amp; Salario
+                    </span>
+                    <span class="weight-tag">30%</span>
+                </div>
+
+                <div class="d-flex align-items-baseline justify-content-between mb-1">
+                    <span class="subscore-number @GetScoreColorClass(SubScores.EconomicScore)">
+                        @SubScores.EconomicScore<small class="text-muted fs-6">/100</small>
+                    </span>
+                    <span class="badge @GetBadgeClass(SubScores.EconomicScore)">
+                        @GetScoreLabel(SubScores.EconomicScore)
+                    </span>
+                </div>
+
+                <div class="progress progress-subscore mb-2">
+                    <div class="progress-bar @GetProgressBarClass(SubScores.EconomicScore)" 
+                         role="progressbar" 
+                         style="width: @SubScores.EconomicScore%" 
+                         aria-valuenow="@SubScores.EconomicScore" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100"></div>
+                </div>
+
+                <p class="subscore-rationale mb-0">
+                    @(string.IsNullOrWhiteSpace(SubScores.EconomicRationale) 
+                        ? "Evaluación de deducciones salariales, desalarización y asunción de costos." 
+                        : SubScores.EconomicRationale)
+                </p>
+            </div>
+        </div>
+
+        <!-- Dimensión 2: Jornada y Disponibilidad (25%) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="subscore-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="dimension-title">
+                        <i class="bi bi-clock-history text-warning me-1"></i> Jornada &amp; Descanso
+                    </span>
+                    <span class="weight-tag">25%</span>
+                </div>
+
+                <div class="d-flex align-items-baseline justify-content-between mb-1">
+                    <span class="subscore-number @GetScoreColorClass(SubScores.WorkingHoursScore)">
+                        @SubScores.WorkingHoursScore<small class="text-muted fs-6">/100</small>
+                    </span>
+                    <span class="badge @GetBadgeClass(SubScores.WorkingHoursScore)">
+                        @GetScoreLabel(SubScores.WorkingHoursScore)
+                    </span>
+                </div>
+
+                <div class="progress progress-subscore mb-2">
+                    <div class="progress-bar @GetProgressBarClass(SubScores.WorkingHoursScore)" 
+                         role="progressbar" 
+                         style="width: @SubScores.WorkingHoursScore%" 
+                         aria-valuenow="@SubScores.WorkingHoursScore" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100"></div>
+                </div>
+
+                <p class="subscore-rationale mb-0">
+                    @(string.IsNullOrWhiteSpace(SubScores.WorkingHoursRationale) 
+                        ? "Evaluación de límites de horas 2026, horas extras, guardias on-call y desconexión." 
+                        : SubScores.WorkingHoursRationale)
+                </p>
+            </div>
+        </div>
+
+        <!-- Dimensión 3: Propiedad Intelectual y No Competencia (25%) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="subscore-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="dimension-title">
+                        <i class="bi bi-lightbulb-fill text-warning me-1"></i> PI &amp; No Competencia
+                    </span>
+                    <span class="weight-tag">25%</span>
+                </div>
+
+                <div class="d-flex align-items-baseline justify-content-between mb-1">
+                    <span class="subscore-number @GetScoreColorClass(SubScores.IntellectualPropertyScore)">
+                        @SubScores.IntellectualPropertyScore<small class="text-muted fs-6">/100</small>
+                    </span>
+                    <span class="badge @GetBadgeClass(SubScores.IntellectualPropertyScore)">
+                        @GetScoreLabel(SubScores.IntellectualPropertyScore)
+                    </span>
+                </div>
+
+                <div class="progress progress-subscore mb-2">
+                    <div class="progress-bar @GetProgressBarClass(SubScores.IntellectualPropertyScore)" 
+                         role="progressbar" 
+                         style="width: @SubScores.IntellectualPropertyScore%" 
+                         aria-valuenow="@SubScores.IntellectualPropertyScore" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100"></div>
+                </div>
+
+                <p class="subscore-rationale mb-0">
+                    @(string.IsNullOrWhiteSpace(SubScores.IntellectualPropertyRationale) 
+                        ? "Evaluación de cesión de creaciones fuera de horario y acuerdos de no competencia." 
+                        : SubScores.IntellectualPropertyRationale)
+                </p>
+            </div>
+        </div>
+
+        <!-- Dimensión 4: Estabilidad y Terminación (20%) -->
+        <div class="col-xl-3 col-md-6">
+            <div class="subscore-card h-100">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <span class="dimension-title">
+                        <i class="bi bi-shield-lock-fill text-warning me-1"></i> Estabilidad &amp; Despido
+                    </span>
+                    <span class="weight-tag">20%</span>
+                </div>
+
+                <div class="d-flex align-items-baseline justify-content-between mb-1">
+                    <span class="subscore-number @GetScoreColorClass(SubScores.StabilityTerminationScore)">
+                        @SubScores.StabilityTerminationScore<small class="text-muted fs-6">/100</small>
+                    </span>
+                    <span class="badge @GetBadgeClass(SubScores.StabilityTerminationScore)">
+                        @GetScoreLabel(SubScores.StabilityTerminationScore)
+                    </span>
+                </div>
+
+                <div class="progress progress-subscore mb-2">
+                    <div class="progress-bar @GetProgressBarClass(SubScores.StabilityTerminationScore)" 
+                         role="progressbar" 
+                         style="width: @SubScores.StabilityTerminationScore%" 
+                         aria-valuenow="@SubScores.StabilityTerminationScore" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100"></div>
+                </div>
+
+                <p class="subscore-rationale mb-0">
+                    @(string.IsNullOrWhiteSpace(SubScores.StabilityTerminationRationale) 
+                        ? "Evaluación de causales de despido, debido proceso de descargos y contrato realidad." 
+                        : SubScores.StabilityTerminationRationale)
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public RiskSubScores SubScores { get; set; } = new();
+    [Parameter] public int GlobalScore { get; set; }
+
+    private static string GetScoreLabel(int score) => score switch
+    {
+        <= 29 => "Bajo Riesgo",
+        <= 69 => "Riesgo Moderado",
+        _ => "Riesgo Crítico"
+    };
+
+    private static string GetScoreColorClass(int score) => score switch
+    {
+        <= 29 => "text-success",
+        <= 69 => "text-warning",
+        _ => "text-danger"
+    };
+
+    private static string GetBadgeClass(int score) => score switch
+    {
+        <= 29 => "bg-success-subtle text-success border border-success-subtle",
+        <= 69 => "bg-warning-subtle text-warning border border-warning-subtle",
+        _ => "bg-danger-subtle text-danger border border-danger-subtle"
+    };
+
+    private static string GetProgressBarClass(int score) => score switch
+    {
+        <= 29 => "bg-success",
+        <= 69 => "bg-warning",
+        _ => "bg-danger"
+    };
+}
