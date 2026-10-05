@@ -555,4 +555,232 @@ public class GeminiAuditService : IGeminiAuditService
 
         return trimmed.Trim();
     }
+
+    public async Task<string> AskContractQuestionAsync(
+        string documentText,
+        AnalysisResult? analysisResult,
+        List<ContractChatMessage> conversationHistory,
+        string userQuestion,
+        AuditOptions? options = null,
+        CancellationToken ct = default)
+    {
+        var apiKey = _configuration["Gemini:ApiKey"];
+        if (string.IsNullOrWhiteSpace(apiKey) || apiKey.Contains("TU_API_KEY"))
+        {
+            throw new InvalidOperationException("La API Key de Google Gemini no está configurada. Por favor ejecute en terminal: dotnet user-secrets set \"Gemini:ApiKey\" \"TU_KEY\" o agréguela en appsettings.json.");
+        }
+
+        options ??= new AuditOptions();
+
+        var configuredModel = _configuration["Gemini:Model"] ?? "gemini-3.5-flash-lite";
+        var candidateModels = new[] 
+        { 
+            configuredModel, 
+            "gemini-3.5-flash-lite",
+            "gemini-flash-lite-latest",
+            "gemini-3.5-flash", 
+            "gemini-flash-latest", 
+            "gemini-3.8-flash",
+            "gemini-pro-latest"
+        }
+        .Distinct(StringComparer.OrdinalIgnoreCase)
+        .ToList();
+        var client = _httpClientFactory.CreateClient(HttpClientName);
+
+        var systemPrompt = BuildChatSystemPrompt(documentText, analysisResult, options);
+
+        var contentsList = new List<object>();
+
+        if (conversationHistory != null)
+        {
+            foreach (var msg in conversationHistory)
+            {
+                if (string.IsNullOrWhiteSpace(msg.Content) || msg.IsError) continue;
+
+                var role = msg.Role == ChatSenderRole.User ? "user" : "model";
+                contentsList.Add(new
+                {
+                    role = role,
+                    parts = new[] { new { text = msg.Content } }
+                });
+            }
+        }
+
+        contentsList.Add(new
+        {
+            role = "user",
+            parts = new[] { new { text = userQuestion } }
+        });
+
+        var requestPayload = new
+        {
+            system_instruction = new
+            {
+                parts = new[]
+                {
+                    new { text = systemPrompt }
+                }
+            },
+            contents = contentsList,
+            generationConfig = new
+            {
+                temperature = 0.3,
+                max_output_tokens = 2048
+            }
+        };
+
+        HttpResponseMessage? response = null;
+        string lastError = string.Empty;
+
+        foreach (var model in candidateModels)
+        {
+            var requestUri = $"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={apiKey}";
+            const int maxRetries = 2;
+            var retryDelay = TimeSpan.FromSeconds(2);
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                using var modelCts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+                modelCts.CancelAfter(TimeSpan.FromSeconds(28));
+
+                try
+                {
+                    var jsonContent = new StringContent(
+                        JsonSerializer.Serialize(requestPayload),
+                        Encoding.UTF8,
+                        "application/json"
+                    );
+
+                    response = await client.PostAsync(requestUri, jsonContent, modelCts.Token);
+
+                    if (response.IsSuccessStatusCode)
+                    {
+                        break;
+                    }
+
+                    if ((response.StatusCode == HttpStatusCode.TooManyRequests || 
+                         (int)response.StatusCode == 503) && attempt < maxRetries)
+                    {
+                        _logger.LogWarning("Gemini API ({Model}) respondió con {StatusCode} en Chat. Reintento {Attempt}/{MaxRetries} en {Delay}s...",
+                            model, response.StatusCode, attempt, maxRetries, retryDelay.TotalSeconds);
+                        await Task.Delay(retryDelay, ct);
+                        retryDelay *= 2;
+                        continue;
+                    }
+
+                    var errorBody = await response.Content.ReadAsStringAsync(ct);
+                    lastError = errorBody;
+                    _logger.LogWarning("Gemini API ({Model}) respondió con {StatusCode} en Chat: {ErrorBody}", model, response.StatusCode, errorBody);
+
+                    if (response.StatusCode == HttpStatusCode.Unauthorized || response.StatusCode == HttpStatusCode.Forbidden)
+                    {
+                        throw new InvalidOperationException($"Error de autenticación con Google Gemini ({response.StatusCode}). Verifique que su API Key sea válida.");
+                    }
+
+                    if (response.StatusCode == HttpStatusCode.NotFound || 
+                        (int)response.StatusCode == 503 || 
+                        response.StatusCode == HttpStatusCode.TooManyRequests)
+                    {
+                        break;
+                    }
+
+                    throw new InvalidOperationException($"Error de Gemini API en Chat ({response.StatusCode}): {errorBody}");
+                }
+                catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+                {
+                    lastError = $"El modelo '{model}' no respondió dentro del tiempo límite de 28 segundos.";
+                    _logger.LogWarning("Timeout (28s) para {Model} en Chat. Probando siguiente modelo...", model);
+                    break;
+                }
+                catch (HttpRequestException ex) when (attempt < maxRetries)
+                {
+                    _logger.LogWarning(ex, "Error de red con {Model} en Chat. Reintento {Attempt}/{MaxRetries}...", model, attempt, maxRetries);
+                    await Task.Delay(retryDelay, ct);
+                    retryDelay *= 2;
+                }
+                catch (HttpRequestException ex)
+                {
+                    lastError = ex.Message;
+                    _logger.LogWarning(ex, "Error persistente en {Model} para Chat. Probando siguiente modelo...", model);
+                    break;
+                }
+            }
+
+            if (response != null && response.IsSuccessStatusCode)
+            {
+                break;
+            }
+        }
+
+        if (response == null || !response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"No fue posible obtener respuesta de Gemini. Último error: {lastError}");
+        }
+
+        var responseString = await response.Content.ReadAsStringAsync(ct);
+        using var jsonDoc = JsonDocument.Parse(responseString);
+        if (jsonDoc.RootElement.TryGetProperty("candidates", out var candidates) && 
+            candidates.GetArrayLength() > 0 &&
+            candidates[0].TryGetProperty("content", out var content) &&
+            content.TryGetProperty("parts", out var parts) &&
+            parts.GetArrayLength() > 0 &&
+            parts[0].TryGetProperty("text", out var textElement))
+        {
+            return textElement.GetString() ?? "No se generó contenido de respuesta.";
+        }
+
+        return "Gemini completó el proceso pero no se encontró texto en la respuesta.";
+    }
+
+    private static string BuildChatSystemPrompt(string documentText, AnalysisResult? analysisResult, AuditOptions options)
+    {
+        var country = options.GetSelectedCountry();
+        var perspectiveTitle = options.Perspective == AuditPerspective.Worker 
+            ? "DEFENSA DEL TRABAJADOR / CONTRATISTA (PARTE DÉBIL O PRESTADORA)" 
+            : "BLINDAJE DE LA EMPRESA / CONTRATANTE (PARTE EMPLEADORA O CONTRATANTE)";
+
+        var sb = new StringBuilder();
+        sb.AppendLine("ERES EL ASISTENTE JURÍDICO INTELIGENTE Y COPILOTO DE AUDITORÍA CONTRACTUAL DE 'DocAnalyzer AI (Lex Audit)'.");
+        sb.AppendLine("Tu misión es responder preguntas, aclarar cláusulas, señalar riesgos y brindar orientación estratégica sobre el contrato y anexos que fueron analizados.");
+        sb.AppendLine();
+        sb.AppendLine("=== DIRECTRICES FUNDAMENTALES ===");
+        sb.AppendLine($"1. JURISDICCIÓN: {country.Name} ({country.LegalFramework}). Responde conforme a la legislación y jurisprudencia de este marco legal.");
+        sb.AppendLine($"2. PERSPECTIVA ASISTIDA: {perspectiveTitle}.");
+        sb.AppendLine("3. FUNDAMENTACIÓN ESTRICTA: Basa tus respuestas rigurosamente en las cláusulas del documento proporcionado. Siempre que aplique, cita la cláusula explícita (ejemplo: '[Cláusula 8.1: Terminación anticipada]').");
+        sb.AppendLine("4. ESTRUCTURA Y TONO: Tono profesional, claro, accesible y ejecutivo. Usa negritas y viñetas para hacer la lectura ágil.");
+        sb.AppendLine("5. IDIOMA: Responde obligatoriamente 100% en idioma español.");
+        sb.AppendLine("6. ALCANCE: Si el contrato no estipula algo sobre lo que el usuario pregunta, indícalo claramente como un vacío o laguna contractual y advierte sobre el riesgo asociado.");
+        sb.AppendLine();
+
+        if (analysisResult != null)
+        {
+            sb.AppendLine("=== RESULTADO DEL DICTAMEN DE AUDITORÍA PREVIO ===");
+            sb.AppendLine($"- Tipo de Contrato: {analysisResult.DetectedContractType}");
+            sb.AppendLine($"- Nivel de Riesgo Global: {analysisResult.RiskScore}/100");
+            sb.AppendLine($"- Resumen Ejecutivo: {analysisResult.DocumentSummary}");
+            if (analysisResult.RedFlags.Count > 0)
+            {
+                sb.AppendLine($"- Red Flags Críticas: {analysisResult.RedFlags.Count} detectadas.");
+            }
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("=== DOCUMENTO PRINCIPAL (CONTRATO) ===");
+        sb.AppendLine(documentText);
+        sb.AppendLine();
+
+        if (options.Annexes.Count > 0)
+        {
+            sb.AppendLine("=== ANEXOS / 'OTRO SÍ' ADJUNTOS ===");
+            for (int i = 0; i < options.Annexes.Count; i++)
+            {
+                var annex = options.Annexes[i];
+                sb.AppendLine($"--- Anexo {i + 1}: {annex.FileName} ---");
+                sb.AppendLine(annex.Text);
+                sb.AppendLine();
+            }
+        }
+
+        return sb.ToString();
+    }
 }

@@ -1,0 +1,389 @@
+@namespace DocAnalyzerAI.Components.Audit
+@inject IGeminiAuditService GeminiService
+@inject IJSRuntime JS
+
+<!-- Backdrop Oscuro -->
+<div class="chat-backdrop @(IsOpen ? "show" : "")" @onclick="HandleClose"></div>
+
+<!-- Drawer Lateral Deslizante -->
+<div class="chat-drawer @(IsOpen ? "open" : "")" id="contractChatDrawer">
+    <!-- Header del Chat -->
+    <div class="chat-header">
+        <div class="d-flex align-items-center gap-2">
+            <div class="bg-warning bg-opacity-20 text-warning rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                <i class="bi bi-stars"></i>
+            </div>
+            <div>
+                <h6 class="mb-0 fw-bold text-white">Pregúntale a tu contrato</h6>
+                <small class="text-white-50" style="font-size: 0.72rem;">Google Gemini &bull; Contexto del contrato indexado</small>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-1">
+            <button type="button" class="btn btn-sm btn-link text-white-50 p-1 text-decoration-none" @onclick="ClearChat" title="Reiniciar visualización del chat">
+                <i class="bi bi-arrow-counterclockwise fs-6"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-link text-white p-1 text-decoration-none" @onclick="HandleClose" title="Cerrar chat">
+                <i class="bi bi-x-lg fs-5"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Barra de Contexto del Documento Activo y Contador de Consultas -->
+    <div class="px-3 py-2 bg-secondary bg-opacity-10 border-bottom border-secondary border-opacity-15 d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <span class="small text-muted text-truncate" style="max-width: 210px;" title="@DocumentName">
+            <i class="bi bi-file-earmark-text me-1 text-warning"></i> @(string.IsNullOrWhiteSpace(DocumentName) ? "Contrato en análisis" : DocumentName)
+        </span>
+        <div class="d-flex align-items-center gap-2">
+            @if (HasReachedLimit)
+            {
+                <span class="badge bg-danger text-white small" style="font-size: 0.7rem;">
+                    <i class="bi bi-slash-circle me-1"></i>Límite: 0/@MaxQuestions
+                </span>
+            }
+            else
+            {
+                <span class="badge @(RemainingQuestions == 1 ? "bg-warning-subtle text-warning-emphasis border border-warning-subtle" : "badge-gold") small" style="font-size: 0.7rem;">
+                    <i class="bi bi-chat-quote-fill me-1"></i>@RemainingQuestions @(RemainingQuestions == 1 ? "pregunta restante" : "preguntas restantes")
+                </span>
+            }
+            <span class="badge bg-success-subtle text-success small" style="font-size: 0.7rem;">
+                <i class="bi bi-check-circle-fill me-1"></i>Indexado
+            </span>
+        </div>
+    </div>
+
+    <!-- Cuerpo de Mensajes -->
+    <div class="chat-body" id="contractChatScrollArea">
+        @foreach (var msg in Messages)
+        {
+            if (msg.Role == ChatSenderRole.User)
+            {
+                <div class="chat-bubble chat-bubble-user">
+                    @msg.Content
+                </div>
+            }
+            else
+            {
+                <div class="chat-bubble chat-bubble-gemini">
+                    <div class="d-flex align-items-center justify-content-between mb-1 border-bottom pb-1 border-secondary border-opacity-10">
+                        <div class="d-flex align-items-center gap-1 text-muted" style="font-size: 0.75rem;">
+                            <i class="bi bi-cpu-fill text-warning"></i>
+                            <strong class="text-body">Gemini Copilot</strong>
+                        </div>
+                        <button class="btn btn-link btn-sm p-0 text-muted text-decoration-none" 
+                                style="font-size: 0.75rem;" 
+                                @onclick="() => CopyResponse(msg)"
+                                title="Copiar respuesta">
+                            @if (CopiedMessageId == msg.Id)
+                            {
+                                <span class="badge-copied text-white"><i class="bi bi-check2 me-1"></i>¡Copiado!</span>
+                            }
+                            else
+                            {
+                                <i class="bi bi-clipboard me-1"></i><span>Copiar</span>
+                            }
+                        </button>
+                    </div>
+
+                    <div class="formatted-chat-content">
+                        @((MarkupString)FormatMarkdown(msg.Content))
+                    </div>
+
+                    @if (msg == Messages.FirstOrDefault() && Messages.Count == 1 && !HasReachedLimit)
+                    {
+                        <!-- Sugerencias de Preguntas Frecuentes Iniciales -->
+                        <div class="mt-3">
+                            <span class="text-muted small d-block mb-1 fw-semibold">Consultas sugeridas sobre este acuerdo (@RemainingQuestions de @MaxQuestions disponibles):</span>
+                            <div class="quick-prompts-container">
+                                <button type="button" class="prompt-chip" disabled="@(HasReachedLimit || IsLoading)" @onclick='() => AskQuickPrompt("¿Cuál es el plazo de preaviso y causales de terminación anticipada?")'>
+                                    ⏱️ ¿Plazo de preaviso y terminación?
+                                </button>
+                                <button type="button" class="prompt-chip" disabled="@(HasReachedLimit || IsLoading)" @onclick='() => AskQuickPrompt("¿Existe exclusividad o restricción de no competencia post-contractual?")'>
+                                    🔒 ¿Exclusividad o no competencia?
+                                </button>
+                                <button type="button" class="prompt-chip" disabled="@(HasReachedLimit || IsLoading)" @onclick='() => AskQuickPrompt("¿Qué sanciones o penalidades económicas me aplican en caso de demora o falta?")'>
+                                    💰 ¿Penalidades económicas?
+                                </button>
+                                <button type="button" class="prompt-chip" disabled="@(HasReachedLimit || IsLoading)" @onclick='() => AskQuickPrompt("¿Cuáles son las cláusulas más riesgosas o desproporcionadas detectadas?")'>
+                                    ⚠️ ¿Cláusulas más riesgosas?
+                                </button>
+                                @if (AuditConfig?.Annexes.Count > 0)
+                                {
+                                    <button type="button" class="prompt-chip" disabled="@(HasReachedLimit || IsLoading)" @onclick='() => AskQuickPrompt("¿Qué obligaciones modifica o añade el Otro Sí / Anexo adjunto?")'>
+                                        📎 ¿Qué modifica el Otro Sí / Anexo?
+                                    </button>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+
+        <!-- Indicador de Respuesta en Progreso -->
+        @if (IsLoading)
+        {
+            <div class="typing-indicator" id="chatTypingIndicator">
+                <div class="typing-dots">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+                <span class="typing-text small text-muted">Gemini analizando el contrato...</span>
+            </div>
+        }
+
+        @if (HasReachedLimit && !IsLoading)
+        {
+            <div class="alert alert-warning py-2 px-3 small d-flex align-items-start gap-2 mb-0 border-0 bg-warning bg-opacity-10 text-body">
+                <i class="bi bi-info-circle-fill text-warning fs-5 flex-shrink-0 mt-1"></i>
+                <div>
+                    <strong>Límite de consultas completado:</strong>
+                    <p class="mb-0 mt-1 small text-muted">
+                        Has utilizado las <strong>@MaxQuestions preguntas permitidas</strong> para este contrato. Si deseas realizar consultas sobre otro acuerdo, puedes auditar un nuevo documento.
+                    </p>
+                </div>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(ChatErrorMessage))
+        {
+            <div class="alert alert-danger py-2 px-3 small d-flex align-items-center gap-2 mb-0">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                <div>@ChatErrorMessage</div>
+            </div>
+        }
+    </div>
+
+    <!-- Footer con Input -->
+    <div class="chat-footer">
+        <div class="chat-input-wrapper">
+            <textarea class="chat-input" 
+                      rows="1" 
+                      placeholder="@(HasReachedLimit ? "Límite de preguntas alcanzado" : "Pregúntale a tu contrato...")" 
+                      @bind="InputText" 
+                      @bind:event="oninput"
+                      @onkeydown="HandleKeyDown"
+                      disabled="@(IsLoading || HasReachedLimit)"></textarea>
+
+            <button type="button" 
+                    class="btn-send-message" 
+                    @onclick="SendMessageAsync" 
+                    disabled="@(IsLoading || HasReachedLimit || string.IsNullOrWhiteSpace(InputText))"
+                    title="@(HasReachedLimit ? "Límite alcanzado" : "Enviar pregunta")">
+                @if (IsLoading)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                }
+                else
+                {
+                    <i class="bi bi-send-fill"></i>
+                }
+            </button>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+            <small class="text-muted" style="font-size: 0.7rem;">
+                <i class="bi bi-shield-check me-1 text-success"></i> Máximo @MaxQuestions consultas por contrato auditado.
+            </small>
+            <small class="text-muted" style="font-size: 0.7rem;">
+                @(HasReachedLimit ? "Límite: 0 restantes" : $"{RemainingQuestions} disponible{(RemainingQuestions == 1 ? "" : "s")}")
+            </small>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public string? ContractText { get; set; }
+    [Parameter] public string? DocumentName { get; set; }
+    [Parameter] public AnalysisResult? AnalysisData { get; set; }
+    [Parameter] public AuditOptions? AuditConfig { get; set; }
+    [Parameter] public int MaxQuestions { get; set; } = 3;
+
+    private List<ContractChatMessage> Messages = new();
+    private string InputText = string.Empty;
+    private bool IsLoading;
+    private string? ChatErrorMessage;
+    private string? CopiedMessageId;
+    private int QuestionsAskedCount;
+
+    private int RemainingQuestions => Math.Max(0, MaxQuestions - QuestionsAskedCount);
+    private bool HasReachedLimit => RemainingQuestions <= 0;
+
+    protected override void OnInitialized()
+    {
+        InitializeWelcomeMessage();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Messages.Count == 0)
+        {
+            InitializeWelcomeMessage();
+        }
+
+        if (IsOpen)
+        {
+            await ScrollToBottomAsync();
+        }
+    }
+
+    private void InitializeWelcomeMessage()
+    {
+        Messages.Clear();
+        Messages.Add(new ContractChatMessage
+        {
+            Role = ChatSenderRole.Assistant,
+            Content = $"¡Hola! He procesado completamente este contrato y sus cláusulas. Tienes disponibles {RemainingQuestions} de {MaxQuestions} consultas para profundizar en obligaciones, penalidades, honorarios o vigencia. Elige una sugerencia o formula tu pregunta directamente abajo."
+        });
+    }
+
+    private async Task HandleClose()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey)
+        {
+            await SendMessageAsync();
+        }
+    }
+
+    private async Task AskQuickPrompt(string promptText)
+    {
+        if (IsLoading || HasReachedLimit) return;
+        InputText = promptText;
+        await SendMessageAsync();
+    }
+
+    private async Task SendMessageAsync()
+    {
+        var text = InputText?.Trim();
+        if (string.IsNullOrWhiteSpace(text) || IsLoading || HasReachedLimit) return;
+
+        ChatErrorMessage = null;
+        InputText = string.Empty;
+        QuestionsAskedCount++;
+
+        // Agregar mensaje del usuario
+        Messages.Add(new ContractChatMessage
+        {
+            Role = ChatSenderRole.User,
+            Content = text
+        });
+
+        IsLoading = true;
+        StateHasChanged();
+        await ScrollToBottomAsync();
+
+        try
+        {
+            var rawContract = ContractText ?? string.Empty;
+            var response = await GeminiService.AskContractQuestionAsync(
+                rawContract,
+                AnalysisData,
+                Messages.Take(Messages.Count - 1).ToList(),
+                text,
+                AuditConfig
+            );
+
+            Messages.Add(new ContractChatMessage
+            {
+                Role = ChatSenderRole.Assistant,
+                Content = response
+            });
+        }
+        catch (Exception ex)
+        {
+            ChatErrorMessage = $"Error al consultar a Gemini: {ex.Message}";
+            // En caso de fallo de red o error de API, devolvemos la consulta para no penalizar al usuario
+            QuestionsAskedCount = Math.Max(0, QuestionsAskedCount - 1);
+
+            Messages.Add(new ContractChatMessage
+            {
+                Role = ChatSenderRole.Assistant,
+                Content = "No fue posible procesar la consulta en este momento. La pregunta no se ha descontado de tu límite. Por favor verifica tu conexión o intenta nuevamente.",
+                IsError = true
+            });
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+            await ScrollToBottomAsync();
+        }
+    }
+
+    private async Task CopyResponse(ContractChatMessage msg)
+    {
+        try
+        {
+            var success = await JS.InvokeAsync<bool>("docAnalyzer.copyToClipboard", msg.Content);
+            if (success)
+            {
+                CopiedMessageId = msg.Id;
+                StateHasChanged();
+                await Task.Delay(2000);
+                if (CopiedMessageId == msg.Id)
+                {
+                    CopiedMessageId = null;
+                    StateHasChanged();
+                }
+            }
+        }
+        catch { }
+    }
+
+    private void ClearChat()
+    {
+        InitializeWelcomeMessage();
+        ChatErrorMessage = null;
+    }
+
+    private async Task ScrollToBottomAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("docAnalyzer.scrollChatToBottom", "contractChatScrollArea");
+        }
+        catch { }
+    }
+
+    private static string FormatMarkdown(string markdown)
+    {
+        if (string.IsNullOrEmpty(markdown)) return string.Empty;
+
+        var encoded = System.Net.WebUtility.HtmlEncode(markdown);
+
+        encoded = System.Text.RegularExpressions.Regex.Replace(
+            encoded, 
+            @"\*\*(.*?)\*\*", 
+            "<strong>$1</strong>"
+        );
+
+        encoded = System.Text.RegularExpressions.Regex.Replace(
+            encoded, 
+            @"\*(.*?)\*", 
+            "<em>$1</em>"
+        );
+
+        encoded = encoded.Replace("\r\n", "\n").Replace("\n", "<br/>");
+
+        encoded = System.Text.RegularExpressions.Regex.Replace(
+            encoded,
+            @"(^|<br\/>)[-\*]\s+(.*?)(?=(<br\/>|$))",
+            "$1<div class='ms-2 my-1'>&bull; $2</div>"
+        );
+
+        encoded = System.Text.RegularExpressions.Regex.Replace(
+            encoded,
+            @"\[(Cl[áa]usula.*?)\]",
+            "<span class='badge bg-warning-subtle text-warning-emphasis border border-warning-subtle px-2 py-0 ms-1'><i class='bi bi-bookmark-fill me-1 small'></i>$1</span>"
+        );
+
+        return encoded;
+    }
+}

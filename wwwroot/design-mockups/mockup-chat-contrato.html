@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocAnalyzer AI - Mockup: Pregúntale a tu Contrato</title>
+    <!-- Bootstrap 5.3 & Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-serif: 'Playfair Display', Georgia, serif;
+            --font-mono: 'JetBrains Mono', monospace;
+            
+            --brand-navy: #0f172a;
+            --brand-navy-deep: #0a0f1d;
+            --brand-gold: #c29b38;
+            --brand-gold-hover: #a17f2a;
+            --brand-gold-subtle: rgba(194, 155, 56, 0.14);
+            --brand-gold-border: rgba(194, 155, 56, 0.35);
+
+            --bg-page: #f8fafc;
+            --card-surface: #ffffff;
+            --border-subtle: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #64748b;
+
+            --sidebar-bg: #060a14;
+            --top-row-bg: #ffffff;
+
+            --chat-drawer-width: 440px;
+        }
+
+        [data-bs-theme="dark"] {
+            --bg-page: #080d1a;
+            --card-surface: #0f172a;
+            --border-subtle: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --top-row-bg: #0f172a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-page);
+            color: var(--text-primary);
+            font-family: var(--font-sans);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            transition: background-color 0.25s ease, color 0.25s ease;
+        }
+
+        .heading-serif {
+            font-family: var(--font-serif);
+        }
+
+        /* Layout structure identical to Blazor */
+        .app-layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--sidebar-bg);
+            color: #ffffff;
+            flex-shrink: 0;
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+            transition: margin-right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Top Row Navbar */
+        .top-row {
+            height: 3.5rem;
+            background-color: var(--top-row-bg);
+            border-bottom: 1px solid var(--border-subtle);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .badge-gold {
+            background-color: var(--brand-gold-subtle);
+            color: var(--brand-gold);
+            border: 1px solid var(--brand-gold-border);
+            font-weight: 600;
+        }
+
+        /* Hero banner */
+        .doc-header-card {
+            background: linear-gradient(135deg, #0b1528 0%, #030712 100%);
+            color: #ffffff;
+            border-radius: 1rem;
+            border: 1px solid rgba(194, 155, 56, 0.25);
+            box-shadow: 0 10px 25px -5px rgba(2, 6, 23, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .doc-header-card::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 320px;
+            height: 100%;
+            background: radial-gradient(circle at 80% 20%, rgba(194, 155, 56, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        /* Executive Card */
+        .card-executive {
+            background-color: var(--card-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 0.85rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            transition: all 0.2s ease;
+        }
+
+        /* Tabs */
+        .nav-pills-custom .nav-link {
+            border-radius: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            padding: 0.55rem 1.15rem;
+            transition: all 0.2s ease;
+            background: transparent;
+            border: 1px solid transparent;
+        }
+        .nav-pills-custom .nav-link:hover {
+            background-color: rgba(148, 163, 184, 0.1);
+            color: var(--text-primary);
+        }
+        .nav-pills-custom .nav-link.active {
+            background-color: var(--card-surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Risk Gauge */
+        .gauge-svg {
+            width: 140px;
+            height: 80px;
+            overflow: visible;
+        }
+
+        /* ==============================================================
+           NUEVOS ELEMENTOS: BOTÓN "PREGÚNTALE A TU CONTRATO"
+           ============================================================== */
+
+        /* Opción 1: Botón Destacado en el Header del Reporte */
+        .btn-ask-contract-primary {
+            background: linear-gradient(135deg, #c29b38 0%, #eab308 100%);
+            color: #0f172a !important;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: none;
+            padding: 0.65rem 1.35rem;
+            border-radius: 0.65rem;
+            box-shadow: 0 4px 14px rgba(194, 155, 56, 0.35);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .btn-ask-contract-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(194, 155, 56, 0.5);
+            background: linear-gradient(135deg, #d4aa3f 0%, #fbbf24 100%);
+        }
+        .btn-ask-contract-primary:active {
+            transform: translateY(0);
+        }
+        .btn-ask-contract-primary .sparkle-icon {
+            font-size: 1.15rem;
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.2); opacity: 1; filter: drop-shadow(0 0 4px #ffffff); }
+        }
+
+        /* Opción 2: Botón Flotante (FAB) en la esquina inferior */
+        .fab-ask-contract {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1040;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #ffffff;
+            border: 1px solid var(--brand-gold);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4), 0 0 15px rgba(194, 155, 56, 0.3);
+            border-radius: 50px;
+            padding: 0.75rem 1.4rem;
+            font-size: 0.92rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .fab-ask-contract:hover {
+            transform: scale(1.05) translateY(-3px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(194, 155, 56, 0.5);
+            color: #ffffff;
+        }
+        .fab-ask-contract .badge-gemini {
+            background-color: var(--brand-gold);
+            color: #0f172a;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 20px;
+            font-weight: 800;
+        }
+
+        /* Banner de Descubrimiento de IA Contractual */
+        .ask-contract-banner {
+            background: linear-gradient(90deg, rgba(194, 155, 56, 0.12) 0%, rgba(59, 130, 246, 0.08) 100%);
+            border: 1px solid var(--brand-gold-border);
+            border-radius: 0.75rem;
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ==============================================================
+           PANEL DE CHAT DRAWER LATERAL (OFFCANVAS DEDICADO)
+           ============================================================== */
+        .chat-drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: var(--chat-drawer-width);
+            max-width: 100vw;
+            height: 100vh;
+            background-color: var(--card-surface);
+            border-left: 1px solid var(--border-subtle);
+            box-shadow: -10px 0 35px rgba(0, 0, 0, 0.25);
+            z-index: 1050;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .chat-drawer.open {
+            transform: translateX(0);
+        }
+
+        /* Backdrop para oscurecer el fondo cuando se abre el chat (opcional) */
+        .chat-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(2px);
+            z-index: 1045;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .chat-backdrop.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Chat Header */
+        .chat-header {
+            padding: 1.1rem 1.25rem;
+            background: linear-gradient(135deg, #0b1528 0%, #030712 100%);
+            color: #ffffff;
+            border-bottom: 1px solid rgba(194, 155, 56, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+
+        /* Chat Messages Body */
+        .chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.15rem;
+            background-color: var(--bg-page);
+        }
+
+        /* Message Bubbles */
+        .chat-bubble {
+            max-width: 88%;
+            padding: 0.85rem 1.1rem;
+            border-radius: 1rem;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .chat-bubble-user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff;
+            border-bottom-right-radius: 0.25rem;
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);
+        }
+
+        .chat-bubble-gemini {
+            align-self: flex-start;
+            background-color: var(--card-surface);
+            color: var(--text-primary);
+            border: 1px solid var(--border-subtle);
+            border-bottom-left-radius: 0.25rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .chat-bubble-gemini .citation-badge {
+            display: inline-block;
+            background-color: var(--brand-gold-subtle);
+            color: var(--brand-gold);
+            border: 1px solid var(--brand-gold-border);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            margin-top: 0.4rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .chat-bubble-gemini .citation-badge:hover {
+            background-color: var(--brand-gold);
+            color: #0f172a;
+        }
+
+        /* Quick Prompt Chips */
+        .quick-prompts-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .prompt-chip {
+            background-color: var(--card-surface);
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            padding: 0.4rem 0.75rem;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+        .prompt-chip:hover {
+            background-color: var(--brand-gold-subtle);
+            border-color: var(--brand-gold-border);
+            color: var(--brand-gold);
+            transform: translateY(-1px);
+        }
+
+        /* Chat Footer & Input */
+        .chat-footer {
+            padding: 1rem 1.25rem;
+            background-color: var(--card-surface);
+            border-top: 1px solid var(--border-subtle);
+            flex-shrink: 0;
+        }
+
+        .chat-input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .chat-input {
+            width: 100%;
+            background-color: var(--bg-page);
+            border: 1px solid var(--border-subtle);
+            border-radius: 0.75rem;
+            padding: 0.75rem 3rem 0.75rem 1rem;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            resize: none;
+            max-height: 120px;
+        }
+        .chat-input:focus {
+            border-color: var(--brand-gold);
+            box-shadow: 0 0 0 3px rgba(194, 155, 56, 0.15);
+        }
+
+        .btn-send-message {
+            position: absolute;
+            right: 0.45rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 36px;
+            height: 36px;
+            border-radius: 0.5rem;
+            background: linear-gradient(135deg, #c29b38 0%, #eab308 100%);
+            border: none;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .btn-send-message:hover {
+            transform: translateY(-50%) scale(1.06);
+            box-shadow: 0 2px 8px rgba(194, 155, 56, 0.4);
+        }
+
+        /* Typing Indicator */
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            padding: 0.5rem 0.85rem;
+            background-color: var(--card-surface);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            width: fit-content;
+        }
+        .typing-indicator span {
+            width: 6px;
+            height: 6px;
+            background-color: var(--brand-gold);
+            border-radius: 50%;
+            animation: bounce 1.3s infinite;
+        }
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        /* Controls Toolbar at top of mockup */
+        .mockup-controls-bar {
+            background-color: #1e1b4b;
+            color: #e0e7ff;
+            padding: 0.55rem 1.5rem;
+            font-size: 0.82rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1060;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Barra de Control del Mockup -->
+    <div class="mockup-controls-bar">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-warning text-dark fw-bold">PROTOTIPO INTERACTIVO</span>
+            <span>Exploración de Diseño: Botón "Pregúntale a tu contrato" &amp; Drawer de Chat Gemini</span>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-white-50 small">Prueba haciendo clic en los botones amarillos o el botón flotante:</span>
+            <button class="btn btn-sm btn-outline-light rounded-pill px-3 py-1" onclick="toggleTheme()">
+                <i class="bi bi-moon-stars me-1" id="themeIcon"></i> Tema Claro/Oscuro
+            </button>
+            <button class="btn btn-sm btn-warning text-dark fw-bold rounded-pill px-3 py-1" onclick="toggleChatDrawer()">
+                <i class="bi bi-chat-quote-fill me-1"></i> Abrir / Cerrar Chat
+            </button>
+        </div>
+    </div>
+
+    <div class="app-layout">
+        <!-- Sidebar Izquierda (Réplica de NavMenu.razor) -->
+        <div class="sidebar d-none d-md-flex">
+            <div class="p-3 border-bottom border-secondary border-opacity-25">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-bank2 text-warning fs-3"></i>
+                    <div>
+                        <span class="fw-bold tracking-wide d-block text-white" style="letter-spacing: 0.5px;">LEX AUDIT</span>
+                        <span class="text-white-50 small" style="font-size: 0.65rem; letter-spacing: 1px;">AI LEGAL INTELLIGENCE</span>
+                    </div>
+                </div>
+            </div>
+            <nav class="nav flex-column p-2 gap-1">
+                <a class="nav-link active text-white bg-white bg-opacity-10 rounded-3 px-3 py-2 d-flex align-items-center gap-2" href="#">
+                    <i class="bi bi-file-earmark-lock text-warning"></i>
+                    <span>Auditoría de Contratos</span>
+                </a>
+            </nav>
+            <div class="mt-auto p-3 text-muted small border-top border-secondary border-opacity-10">
+                <i class="bi bi-shield-lock me-1"></i> Auditoría Confidencial
+            </div>
+        </div>
+
+        <!-- Área Principal -->
+        <div class="main-content">
+            <!-- Navbar Superior (Réplica de MainLayout.razor) -->
+            <div class="top-row">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-gold px-2 py-1 small">
+                        <i class="bi bi-bank2 me-1"></i> LEX AUDIT INTELLIGENCE
+                    </span>
+                    <span class="text-muted small d-none d-md-inline">
+                        &bull; Auditoría confidencial bajo jurisprudencia vigente
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-1 small">
+                        <i class="bi bi-cpu me-1"></i> Google Gemini 3.5
+                    </span>
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-circle" style="width: 34px; height: 34px;" onclick="toggleTheme()">
+                        <i class="bi bi-sun-fill" id="topThemeIcon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Contenido de la Página (Réplica de Home.razor cuando AnalysisData != null) -->
+            <div class="container-fluid p-4">
+                
+                <!-- Banner de Demostración del Botón -->
+                <div class="ask-contract-banner">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="bg-warning bg-opacity-25 text-warning p-2 rounded-3 fs-3">
+                            <i class="bi bi-stars"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-0 text-white">¿Tienes dudas o inquietudes sobre este contrato?</h6>
+                            <small class="text-muted">Consulta cláusulas específicas, obligaciones, riesgos ocultos o interpretaciones legales en segundos.</small>
+                        </div>
+                    </div>
+                    <!-- PROPUESTA DE BOTÓN DESTACADO -->
+                    <button class="btn-ask-contract-primary" onclick="toggleChatDrawer('¿Cuáles son los principales riesgos de este contrato?')">
+                        <i class="bi bi-chat-quote-fill sparkle-icon"></i>
+                        <span>Pregúntale a tu contrato</span>
+                        <span class="badge bg-dark bg-opacity-25 text-dark ms-1 small">Gemini</span>
+                    </button>
+                </div>
+
+                <!-- Header del Reporte Auditado (Executive Card) -->
+                <div class="card card-executive p-4 mb-4">
+                    <div class="row align-items-center">
+                        <div class="col-lg-8 col-md-7">
+                            <div class="d-flex flex-wrap align-items-center gap-2 small mb-2">
+                                <span class="badge badge-gold px-2 py-1">
+                                    <i class="bi bi-briefcase-fill me-1"></i> Prestación de Servicios Profesionales
+                                </span>
+                                <span class="badge bg-secondary-subtle text-secondary px-2 py-1">
+                                    <i class="bi bi-geo-alt-fill me-1"></i> Colombia (Código de Comercio)
+                                </span>
+                                <span class="badge bg-primary-subtle text-primary px-2 py-1">
+                                    <i class="bi bi-person-bounding-box me-1"></i> Blindaje: Empresa
+                                </span>
+                                <span class="badge bg-warning-subtle text-warning-emphasis px-2 py-1 border border-warning-subtle">
+                                    <i class="bi bi-paperclip me-1"></i> +1 Anexo (Acuerdo Confidencialidad)
+                                </span>
+                            </div>
+                            <h2 class="h3 heading-serif fw-bold mb-1">Contrato_Prestacion_Servicios_Software_2026.pdf</h2>
+                            <p class="text-muted mb-0 small">
+                                Analizado por Google Gemini &bull; Clasificación de cláusulas y semáforo de riesgo contractual
+                            </p>
+                        </div>
+
+                        <!-- Tacómetro Semicircular y Acciones -->
+                        <div class="col-lg-4 col-md-5 d-flex flex-column align-items-center align-items-md-end justify-content-center text-center text-md-end mt-3 mt-md-0">
+                            <div class="gauge-container mb-2">
+                                <svg class="gauge-svg" viewBox="0 0 100 58">
+                                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="rgba(148, 163, 184, 0.2)" stroke-width="8" stroke-linecap="round"/>
+                                    <path d="M 10 50 A 40 40 0 0 1 26.5 17.6" fill="none" stroke="#22c55e" stroke-width="8" stroke-linecap="round"/>
+                                    <path d="M 26.5 17.6 A 40 40 0 0 1 73.5 17.6" fill="none" stroke="#f59e0b" stroke-width="8"/>
+                                    <path d="M 73.5 17.6 A 40 40 0 0 1 90 50" fill="none" stroke="#ef4444" stroke-width="8" stroke-linecap="round"/>
+                                    <line x1="50" y1="50" x2="50" y2="16" stroke="currentColor" stroke-width="3" stroke-linecap="round" transform="rotate(45, 50, 50)"/>
+                                    <circle cx="50" cy="50" r="4.5" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="d-flex align-items-baseline gap-2 justify-content-center justify-content-md-end">
+                                <span class="display-6 fw-bold lh-1 text-danger">75</span>
+                                <span class="text-muted fw-semibold fs-6">/ 100</span>
+                            </div>
+                            <div class="mt-1 d-flex align-items-center gap-2">
+                                <span class="badge bg-danger text-white text-uppercase px-3 py-1">Riesgo Severo / Crítico</span>
+                                <button class="btn btn-outline-secondary btn-sm rounded-pill px-3 py-0" style="height: 24px; font-size: 0.78rem;">
+                                    <i class="bi bi-arrow-clockwise me-1"></i>Nuevo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sub-Puntajes de Riesgo Ponderados -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card card-executive p-3 text-center">
+                            <span class="text-muted small fw-semibold">Asimetría Contractual</span>
+                            <h4 class="text-danger fw-bold my-1">82/100</h4>
+                            <span class="badge bg-danger-subtle text-danger small">Crítico</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-executive p-3 text-center">
+                            <span class="text-muted small fw-semibold">Cláusulas Abusivas / Vagas</span>
+                            <h4 class="text-warning fw-bold my-1">68/100</h4>
+                            <span class="badge bg-warning-subtle text-warning small">Moderado</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-executive p-3 text-center">
+                            <span class="text-muted small fw-semibold">Régimen Sancionatorio</span>
+                            <h4 class="text-danger fw-bold my-1">79/100</h4>
+                            <span class="badge bg-danger-subtle text-danger small">Severo</span>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card card-executive p-3 text-center">
+                            <span class="text-muted small fw-semibold">Garantías &amp; Indemnidad</span>
+                            <h4 class="text-success fw-bold my-1">32/100</h4>
+                            <span class="badge bg-success-subtle text-success small">Aceptable</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs de Navegación del Reporte (Incluyendo pestaña opcional de chat) -->
+                <ul class="nav nav-pills nav-pills-custom mb-4 gap-2 border-bottom pb-3">
+                    <li class="nav-item">
+                        <button class="nav-link active" onclick="switchMockTab(this, 'summary')">
+                            <i class="bi bi-file-text me-2"></i>Resumen Ejecutivo
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" onclick="switchMockTab(this, 'strengths')">
+                            <i class="bi bi-shield-check me-2 text-success"></i>Puntos Fuertes
+                            <span class="badge bg-success-subtle text-success ms-2">3</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" onclick="switchMockTab(this, 'weaknesses')">
+                            <i class="bi bi-exclamation-triangle me-2 text-warning"></i>Puntos Débiles
+                            <span class="badge bg-warning-subtle text-warning ms-2">4</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" onclick="switchMockTab(this, 'redflags')">
+                            <i class="bi bi-flag-fill me-2 text-danger"></i>Red Flags
+                            <span class="badge bg-danger-subtle text-danger ms-2">2</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" onclick="switchMockTab(this, 'negotiation')">
+                            <i class="bi bi-chat-quote-fill me-2 text-primary"></i>Mesa de Negociación
+                            <span class="badge bg-primary-subtle text-primary ms-2">5</span>
+                        </button>
+                    </li>
+                    <!-- ALTERNATIVA: Pestaña directa para abrir el Chat -->
+                    <li class="nav-item ms-auto">
+                        <button class="nav-link border border-warning border-opacity-50 text-warning" onclick="toggleChatDrawer()">
+                            <i class="bi bi-stars me-1"></i> Pregúntale a tu Contrato
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Contenido de Ejemplo (Resumen Ejecutivo) -->
+                <div class="card card-executive p-4">
+                    <h5 class="heading-serif fw-bold mb-3"><i class="bi bi-file-earmark-ruled me-2 text-warning"></i>Dictamen General del Acuerdo</h5>
+                    <p class="text-secondary leading-relaxed mb-3">
+                        El documento corresponde a un contrato de prestación de servicios especializados en desarrollo de software y mantenimiento en nube. Si bien define de forma precisa los entregables técnicos, presenta un desequilibrio gravoso en el régimen de responsabilidad patrimonial ilimitada y penalidades desproporcionadas sobre el proveedor.
+                    </p>
+                    <div class="alert alert-warning d-flex align-items-start gap-2 mb-0" role="alert">
+                        <i class="bi bi-exclamation-triangle-fill fs-5 mt-1 flex-shrink-0"></i>
+                        <div>
+                            <strong>Alerta Crítica detectada en Cláusula 14.2:</strong> Se impone una cláusula de exclusividad territorial por 24 meses posteriores a la terminación, sin contraprestación económica compensatoria, lo cual vulnera el principio de libertad de empresa.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTÓN FLOTANTE (FAB) SIEMPRE ACCESIBLE EN LA ESQUINA INFERIOR -->
+    <div class="fab-ask-contract" onclick="toggleChatDrawer()" title="Hacer preguntas sobre este contrato a Gemini">
+        <i class="bi bi-stars text-warning fs-5"></i>
+        <span>Pregúntale a tu contrato</span>
+        <span class="badge-gemini">IA</span>
+    </div>
+
+    <!-- BACKDROP OSCURO DEL CHAT -->
+    <div class="chat-backdrop" id="chatBackdrop" onclick="toggleChatDrawer()"></div>
+
+    <!-- ==============================================================
+         DRAWER LATERAL DE CHAT CON GEMINI
+         ============================================================== -->
+    <div class="chat-drawer" id="chatDrawer">
+        <!-- Header del Chat -->
+        <div class="chat-header">
+            <div class="d-flex align-items-center gap-2">
+                <div class="bg-warning bg-opacity-20 text-warning rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px;">
+                    <i class="bi bi-stars"></i>
+                </div>
+                <div>
+                    <h6 class="mb-0 fw-bold text-white">Pregúntale a tu contrato</h6>
+                    <small class="text-white-50" style="font-size: 0.72rem;">Impulsado por Google Gemini &bull; Contexto del contrato cargado</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-1">
+                <button class="btn btn-sm btn-link text-white-50 p-1 text-decoration-none" onclick="clearChat()" title="Limpiar conversación">
+                    <i class="bi bi-trash"></i>
+                </button>
+                <button class="btn btn-sm btn-link text-white p-1 text-decoration-none" onclick="toggleChatDrawer()" title="Cerrar chat">
+                    <i class="bi bi-x-lg fs-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Banner de Contexto Activo -->
+        <div class="px-3 py-2 bg-secondary bg-opacity-10 border-bottom border-secondary border-opacity-15 d-flex align-items-center justify-content-between">
+            <span class="small text-muted text-truncate" style="max-width: 280px;">
+                <i class="bi bi-file-earmark-text me-1 text-warning"></i> Contrato_Prestacion_Servicios...pdf
+            </span>
+            <span class="badge bg-success-subtle text-success small" style="font-size: 0.7rem;">
+                <i class="bi bi-check-circle-fill me-1"></i>Indexado
+            </span>
+        </div>
+
+        <!-- Mensajes del Chat -->
+        <div class="chat-body" id="chatBody">
+            
+            <!-- Mensaje Inicial de Bienvenida de Gemini -->
+            <div class="chat-bubble chat-bubble-gemini">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi bi-cpu-fill text-warning"></i>
+                    <strong class="small">DocAnalyzer Copilot</strong>
+                </div>
+                ¡Hola! He analizado completamente tu contrato y sus cláusulas. ¿Tienes alguna pregunta específica sobre tus obligaciones, penalidades, pagos o vigencia?
+                
+                <div class="mt-3">
+                    <span class="text-muted small d-block mb-1 fw-semibold">Preguntas frecuentes que puedes hacerme:</span>
+                    <div class="quick-prompts-container">
+                        <button class="prompt-chip" onclick="askQuickPrompt('¿Cuál es el plazo de terminación anticipada y preaviso?')">
+                            ⏱️ ¿Plazo de preaviso y terminación?
+                        </button>
+                        <button class="prompt-chip" onclick="askQuickPrompt('¿Hay cláusulas de exclusividad o no competencia?')">
+                            🔒 ¿Existe exclusividad o no competencia?
+                        </button>
+                        <button class="prompt-chip" onclick="askQuickPrompt('¿Qué penalidades económicas están pactadas?')">
+                            💰 ¿Qué penalidades me aplican?
+                        </button>
+                        <button class="prompt-chip" onclick="askQuickPrompt('¿Cómo afecta el anexo de confidencialidad?')">
+                            📎 ¿Qué obligaciones añade el anexo?
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Ejemplo de Pregunta del Usuario -->
+            <div class="chat-bubble chat-bubble-user">
+                ¿Qué penalidades me aplican si me atraso 5 días en la entrega de un módulo?
+            </div>
+
+            <!-- Ejemplo de Respuesta de Gemini con Citas Contractuales -->
+            <div class="chat-bubble chat-bubble-gemini">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                    <div class="d-flex align-items-center gap-1">
+                        <i class="bi bi-cpu-fill text-warning"></i>
+                        <strong class="small">Google Gemini</strong>
+                    </div>
+                    <span class="text-muted" style="font-size: 0.7rem;">hace un momento</span>
+                </div>
+                De acuerdo con el documento, el retraso de 5 días activa una sanción automática bajo el régimen de penalidad pactado:
+                <ul class="mb-2 ps-3 mt-1 small">
+                    <li><strong>Sanción diaria:</strong> 1.5% del valor total mensual del contrato por cada día de mora.</li>
+                    <li><strong>Impacto a los 5 días:</strong> Equivaldría a un descuento acumulado del <strong>7.5% de tus honorarios mensuales</strong>.</li>
+                    <li><strong>Riesgo de terminación:</strong> La cláusula estipula que un retraso superior a 7 días hábiles otorga facultad al cliente de resolver unilateralmente el contrato por culpa del proveedor.</li>
+                </ul>
+                <div class="citation-badge" title="Ver en el contrato">
+                    <i class="bi bi-link-45deg me-1"></i> Fundamento: Cláusula Décima Cuarta (Mora y Penalidades)
+                </div>
+            </div>
+
+            <!-- Indicador de "Escribiendo..." -->
+            <div class="typing-indicator" id="typingIndicator">
+                <span></span>
+                <span></span>
+                <span></span>
+                <span class="ms-2 small text-muted">Gemini analizando el contrato...</span>
+            </div>
+
+        </div>
+
+        <!-- Input de Mensaje -->
+        <div class="chat-footer">
+            <div class="chat-input-wrapper">
+                <textarea class="chat-input" id="chatInput" rows="1" placeholder="Hazle una pregunta a tu contrato..." onkeydown="handleInputKeyDown(event)"></textarea>
+                <button class="btn-send-message" onclick="sendMessage()" title="Enviar pregunta">
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mt-2 px-1">
+                <small class="text-muted" style="font-size: 0.7rem;">
+                    <i class="bi bi-shield-check me-1 text-success"></i> Respuestas fundadas en las cláusulas de tu documento.
+                </small>
+                <small class="text-muted" style="font-size: 0.7rem;">Shift+Enter para salto de línea</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Interactivos para el Mockup -->
+    <script>
+        // Alternar Drawer de Chat
+        function toggleChatDrawer(initialPrompt) {
+            const drawer = document.getElementById('chatDrawer');
+            const backdrop = document.getElementById('chatBackdrop');
+            const isOpen = drawer.classList.contains('open');
+
+            if (isOpen) {
+                drawer.classList.remove('open');
+                backdrop.classList.remove('show');
+            } else {
+                drawer.classList.add('open');
+                backdrop.classList.add('show');
+                document.getElementById('chatInput').focus();
+
+                if (initialPrompt) {
+                    setTimeout(() => {
+                        askQuickPrompt(initialPrompt);
+                    }, 400);
+                }
+            }
+        }
+
+        // Alternar Tema Claro / Oscuro
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-bs-theme', newTheme);
+
+            const themeIcon = document.getElementById('themeIcon');
+            const topThemeIcon = document.getElementById('topThemeIcon');
+            if (newTheme === 'dark') {
+                themeIcon.className = 'bi bi-moon-stars me-1';
+                topThemeIcon.className = 'bi bi-sun-fill';
+            } else {
+                themeIcon.className = 'bi bi-sun me-1';
+                topThemeIcon.className = 'bi bi-moon-stars-fill';
+            }
+        }
+
+        // Simular envío de mensaje
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            // Render mensaje de usuario
+            appendMessage(text, 'user');
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Mostrar typing indicator
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'flex';
+            scrollChatToBottom();
+
+            // Simular respuesta de Gemini con retardo
+            setTimeout(() => {
+                indicator.style.display = 'none';
+                generateSimulatedGeminiResponse(text);
+            }, 1200);
+        }
+
+        function askQuickPrompt(promptText) {
+            appendMessage(promptText, 'user');
+            const indicator = document.getElementById('typingIndicator');
+            indicator.style.display = 'flex';
+            scrollChatToBottom();
+
+            setTimeout(() => {
+                indicator.style.display = 'none';
+                generateSimulatedGeminiResponse(promptText);
+            }, 1200);
+        }
+
+        function appendMessage(text, sender) {
+            const chatBody = document.getElementById('chatBody');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble chat-bubble-${sender}`;
+            bubble.textContent = text;
+            chatBody.insertBefore(bubble, document.getElementById('typingIndicator'));
+            scrollChatToBottom();
+        }
+
+        function generateSimulatedGeminiResponse(userQuery) {
+            const chatBody = document.getElementById('chatBody');
+            const bubble = document.createElement('div');
+            bubble.className = 'chat-bubble chat-bubble-gemini';
+
+            let responseHtml = '';
+            const lower = userQuery.toLowerCase();
+
+            if (lower.includes('terminaci') || lower.includes('preaviso')) {
+                responseHtml = `
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi bi-cpu-fill text-warning"></i>
+                            <strong class="small">Google Gemini</strong>
+                        </div>
+                        <span class="text-muted" style="font-size: 0.7rem;">ahora</span>
+                    </div>
+                    La <strong>Cláusula Octava (Terminación Anticipada)</strong> estipula:
+                    <ul class="mb-2 ps-3 mt-1 small">
+                        <li>Cualquiera de las partes puede darlo por terminado con un preaviso formal por escrito de <strong>30 días calendario</strong>.</li>
+                        <li>Si no se respeta dicho preaviso, la parte incumplida deberá pagar una compensación equivalente al canon de un (1) mes de honorarios.</li>
+                    </ul>
+                    <div class="citation-badge"><i class="bi bi-link-45deg me-1"></i> Cláusula 8: Preaviso y Desahucio</div>
+                `;
+            } else if (lower.includes('exclusividad') || lower.includes('competencia')) {
+                responseHtml = `
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi bi-cpu-fill text-warning"></i>
+                            <strong class="small">Google Gemini</strong>
+                        </div>
+                        <span class="text-muted" style="font-size: 0.7rem;">ahora</span>
+                    </div>
+                    ⚠️ <strong>Atención:</strong> La <strong>Cláusula 14.2</strong> impone una restricción de no competencia por <strong>24 meses</strong> tras finalizar la relación contractual, prohibiendo prestar servicios a empresas del mismo sector.
+                    <p class="mb-1 mt-1 small">
+                        Recomendación jurídica: Esta cláusula es desproporcionada al no existir contraprestación económica. En la Mesa de Negociación se sugiere reducirla a 6 meses o limitarla a clientes directos.
+                    </p>
+                    <div class="citation-badge"><i class="bi bi-link-45deg me-1"></i> Cláusula 14.2: No Competencia Post-Contractual</div>
+                `;
+            } else {
+                responseHtml = `
+                    <div class="d-flex align-items-center justify-content-between mb-1">
+                        <div class="d-flex align-items-center gap-1">
+                            <i class="bi bi-cpu-fill text-warning"></i>
+                            <strong class="small">Google Gemini</strong>
+                        </div>
+                        <span class="text-muted" style="font-size: 0.7rem;">ahora</span>
+                    </div>
+                    He analizado tu consulta frente al articulado completo del contrato. Respecto a este punto, el documento señala que los derechos patrimoniales y deberes contractuales se rigen bajo los términos generales, pero te recomiendo revisar en la sección de <strong>Mesa de Negociación</strong> la cláusula correspondiente para mitigar cualquier riesgo de ambigüedad.
+                    <div class="citation-badge"><i class="bi bi-link-45deg me-1"></i> Análisis Transversal de Cláusulas</div>
+                `;
+            }
+
+            bubble.innerHTML = responseHtml;
+            chatBody.insertBefore(bubble, document.getElementById('typingIndicator'));
+            scrollChatToBottom();
+        }
+
+        function scrollChatToBottom() {
+            const chatBody = document.getElementById('chatBody');
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function handleInputKeyDown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function clearChat() {
+            const chatBody = document.getElementById('chatBody');
+            const messages = chatBody.querySelectorAll('.chat-bubble:not(:first-child)');
+            messages.forEach(m => m.remove());
+        }
+
+        function switchMockTab(btn, tabName) {
+            document.querySelectorAll('.nav-pills-custom .nav-link').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        }
+
+        // Auto-expand textarea
+        const textarea = document.getElementById('chatInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+
+        // Cerrar con Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const drawer = document.getElementById('chatDrawer');
+                if (drawer.classList.contains('open')) {
+                    toggleChatDrawer();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

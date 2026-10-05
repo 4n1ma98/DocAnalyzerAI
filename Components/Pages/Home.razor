@@ -74,6 +74,24 @@
     <!-- Dashboard de Resultados Modular -->
     @if (AnalysisData != null && !IsProcessing)
     {
+        <!-- Banner de Acción Rápida: Pregúntale a tu Contrato -->
+        <div class="ask-contract-banner">
+            <div class="d-flex align-items-center gap-3">
+                <div class="bg-warning bg-opacity-25 text-warning p-2 rounded-3 fs-4 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                    <i class="bi bi-stars"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0">¿Tienes dudas o inquietudes sobre este contrato?</h6>
+                    <small class="text-muted">Consulta cláusulas específicas, obligaciones, riesgos ocultos o interpretaciones legales con Gemini.</small>
+                </div>
+            </div>
+            <button type="button" class="btn-ask-contract-primary" @onclick="OpenContractChat">
+                <i class="bi bi-chat-quote-fill sparkle-icon"></i>
+                <span>Pregúntale a tu contrato</span>
+                <span class="badge bg-dark bg-opacity-25 text-dark ms-1 small">Gemini</span>
+            </button>
+        </div>
+
         <!-- Header del Reporte -->
         <div class="card card-executive p-4 mb-4">
             <div class="row align-items-center">
@@ -172,6 +190,21 @@
                 <NegotiationTableTab Suggestions="@AnalysisData.NegotiationSuggestions" />
             }
         </div>
+
+        <!-- Botón Flotante Permanente (FAB) -->
+        <div class="fab-ask-contract" @onclick="OpenContractChat" title="Hacer preguntas sobre este contrato a Gemini">
+            <i class="bi bi-stars text-warning fs-5"></i>
+            <span>Pregúntale a tu contrato</span>
+            <span class="badge-gemini">IA</span>
+        </div>
+
+        <!-- Drawer Lateral de Chat con Gemini -->
+        <ContractChatDrawer IsOpen="@IsChatOpen"
+                            OnClose="CloseContractChat"
+                            ContractText="@OriginalContractText"
+                            DocumentName="@AuditFileName"
+                            AnalysisData="@AnalysisData"
+                            AuditConfig="@AuditConfig" />
     }
 </div>
 
@@ -188,6 +221,17 @@
     private AnalysisResult? AnalysisData;
     private string? AuditFileName;
     private string ActiveTab = "summary";
+    private bool IsChatOpen;
+
+    private void OpenContractChat()
+    {
+        IsChatOpen = true;
+    }
+
+    private void CloseContractChat()
+    {
+        IsChatOpen = false;
+    }
 
     private AuditOptions AuditConfig = new();
 
@@ -433,6 +477,7 @@
         PendingPostAuditAnnexFile = null;
         ErrorMessage = null;
         ActiveTab = "summary";
+        IsChatOpen = false;
         ElapsedSeconds = 0;
         ProcessingProgress = 0;
     }
