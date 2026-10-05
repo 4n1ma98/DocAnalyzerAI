@@ -100,6 +100,15 @@ window.docAnalyzer = {
                 input.dispatchEvent(new Event('change', { bubbles: true }));
             }
         }, false);
+    },
+
+    scrollChatToBottom: function (elementId) {
+        setTimeout(function () {
+            var el = document.getElementById(elementId);
+            if (el) {
+                el.scrollTop = el.scrollHeight;
+            }
+        }, 50);
     }
 };
 
