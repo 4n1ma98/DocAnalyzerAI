@@ -145,14 +145,6 @@
                 </div>
             </div>
         }
-
-        @if (!string.IsNullOrEmpty(ChatErrorMessage))
-        {
-            <div class="alert alert-danger py-2 px-3 small d-flex align-items-center gap-2 mb-0">
-                <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
-                <div>@ChatErrorMessage</div>
-            </div>
-        }
     </div>
 
     <!-- Footer con Input -->
@@ -160,17 +152,17 @@
         <div class="chat-input-wrapper">
             <textarea class="chat-input" 
                       rows="1" 
-                      placeholder="@(HasReachedLimit ? "Límite de preguntas alcanzado" : "Pregúntale a tu contrato...")" 
+                      placeholder="@(HasReachedLimit ? "Límite alcanzado (usa /show para diagnóstico)" : "Pregúntale a tu contrato...")" 
                       @bind="InputText" 
                       @bind:event="oninput"
                       @onkeydown="HandleKeyDown"
-                      disabled="@(IsLoading || HasReachedLimit)"></textarea>
+                      disabled="@IsLoading"></textarea>
 
             <button type="button" 
                     class="btn-send-message" 
                     @onclick="SendMessageAsync" 
-                    disabled="@(IsLoading || HasReachedLimit || string.IsNullOrWhiteSpace(InputText))"
-                    title="@(HasReachedLimit ? "Límite alcanzado" : "Enviar pregunta")">
+                    disabled="@(IsLoading || string.IsNullOrWhiteSpace(InputText))"
+                    title="@(HasReachedLimit ? "Enviar comando (/show)" : "Enviar pregunta")">
                 @if (IsLoading)
                 {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -183,7 +175,7 @@
         </div>
         <div class="d-flex justify-content-between align-items-center mt-2 px-1">
             <small class="text-muted" style="font-size: 0.7rem;">
-                <i class="bi bi-shield-check me-1 text-success"></i> Máximo @MaxQuestions consultas por contrato auditado.
+                <i class="bi bi-shield-check me-1 text-success"></i> Máximo @MaxQuestions consultas por contrato.
             </small>
             <small class="text-muted" style="font-size: 0.7rem;">
                 @(HasReachedLimit ? "Límite: 0 restantes" : $"{RemainingQuestions} disponible{(RemainingQuestions == 1 ? "" : "s")}")
@@ -204,7 +196,7 @@
     private List<ContractChatMessage> Messages = new();
     private string InputText = string.Empty;
     private bool IsLoading;
-    private string? ChatErrorMessage;
+    private string? LastTechnicalError;
     private string? CopiedMessageId;
     private int QuestionsAskedCount;
 
@@ -262,10 +254,48 @@
     private async Task SendMessageAsync()
     {
         var text = InputText?.Trim();
-        if (string.IsNullOrWhiteSpace(text) || IsLoading || HasReachedLimit) return;
+        if (string.IsNullOrWhiteSpace(text) || IsLoading) return;
 
-        ChatErrorMessage = null;
         InputText = string.Empty;
+
+        // Comando especial de diagnóstico: /show, /show-error o /debug
+        if (text.Equals("/show", StringComparison.OrdinalIgnoreCase) || 
+            text.Equals("/show-error", StringComparison.OrdinalIgnoreCase) ||
+            text.Equals("/debug", StringComparison.OrdinalIgnoreCase))
+        {
+            Messages.Add(new ContractChatMessage
+            {
+                Role = ChatSenderRole.User,
+                Content = text
+            });
+
+            string diagContent;
+            if (!string.IsNullOrEmpty(LastTechnicalError))
+            {
+                diagContent = $"🛠️ **Registro de Diagnóstico Técnico:**\n\n```text\n{LastTechnicalError}\n```\n*Este comando no consumió ninguna de tus consultas.*";
+            }
+            else
+            {
+                diagContent = "✅ **Registro de Diagnóstico Técnico:**\n\nNo se han registrado errores técnicos en esta sesión. Todo opera con normalidad.\n*Este comando no consumió ninguna de tus consultas.*";
+            }
+
+            Messages.Add(new ContractChatMessage
+            {
+                Role = ChatSenderRole.Assistant,
+                Content = diagContent
+            });
+
+            StateHasChanged();
+            await ScrollToBottomAsync();
+            return;
+        }
+
+        // Si es una pregunta normal y ya alcanzó el límite, no procesar
+        if (HasReachedLimit)
+        {
+            return;
+        }
+
         QuestionsAskedCount++;
 
         // Agregar mensaje del usuario
@@ -298,10 +328,13 @@
         }
         catch (Exception ex)
         {
-            ChatErrorMessage = $"Error al consultar a Gemini: {ex.Message}";
-            // En caso de fallo de red o error de API, devolvemos la consulta para no penalizar al usuario
+            // Se resguarda el error técnico para ser consultado mediante /show
+            LastTechnicalError = $"[{DateTime.Now:HH:mm:ss}] Error técnico al invocar Gemini:\n{ex.Message}";
+
+            // En caso de fallo, no descontamos la pregunta
             QuestionsAskedCount = Math.Max(0, QuestionsAskedCount - 1);
 
+            // Mensaje amigable y profesional para el usuario
             Messages.Add(new ContractChatMessage
             {
                 Role = ChatSenderRole.Assistant,
@@ -340,7 +373,6 @@
     private void ClearChat()
     {
         InitializeWelcomeMessage();
-        ChatErrorMessage = null;
     }
 
     private async Task ScrollToBottomAsync()
@@ -357,6 +389,14 @@
         if (string.IsNullOrEmpty(markdown)) return string.Empty;
 
         var encoded = System.Net.WebUtility.HtmlEncode(markdown);
+
+        // Bloques de código preformateado (ej: para /show)
+        encoded = System.Text.RegularExpressions.Regex.Replace(
+            encoded,
+            @"```(?:text|json)?\s*\n?(.*?)\n?```",
+            "<pre class='bg-dark text-warning p-2 rounded small my-2 overflow-auto border border-secondary border-opacity-25' style='max-height: 220px; font-family: monospace; white-space: pre-wrap; font-size: 0.75rem;'><code>$1</code></pre>",
+            System.Text.RegularExpressions.RegexOptions.Singleline
+        );
 
         encoded = System.Text.RegularExpressions.Regex.Replace(
             encoded, 
